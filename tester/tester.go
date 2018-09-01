@@ -26,7 +26,7 @@ func main() {
 	tplinateEnd := time.Since(tplinateStart)
 	log.Println("tplinate took", tplinateEnd)
 
-	count := 100
+	count := 0
 	var totalDuration time.Duration
 	for i := 0; i < count; i++ {
 		_, duration := execute(pt)
@@ -34,7 +34,9 @@ func main() {
 
 		log.Println("exec", i, "took", duration)
 	}
-	log.Println("exec took avg", time.Duration(int64(totalDuration)/int64(count)))
+	if count > 0 {
+		log.Println("exec took avg", time.Duration(int64(totalDuration)/int64(count)))
+	}
 
 	bytes, err := pt.Execute(map[string]interface{}{})
 	if err != nil {

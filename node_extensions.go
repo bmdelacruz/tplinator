@@ -6,25 +6,26 @@ import (
 )
 
 type nodeExtension interface {
-	Apply(node node, evaluator evaluator) (*node, error)
+	Apply(node node, evaluator evaluator, boolEvaluator boolEvaluator) (*node, error)
+}
+
+type cneCondition struct {
+	condition string
+	node      *node
 }
 
 type conditionalNodeExtension struct {
-	conditions map[string]*node
+	conditions []*cneCondition
 	elseNode   *node
 }
 
-func (cne *conditionalNodeExtension) Apply(node node, evaluator evaluator) (*node, error) {
-	for conditionalExpression, branchNode := range cne.conditions {
-		resultStr, err := evaluator(conditionalExpression)
-		if err != nil {
-			return nil, err
-		}
-		result, err := strconv.ParseBool(resultStr)
+func (cne *conditionalNodeExtension) Apply(node node, evaluator evaluator, boolEvaluator boolEvaluator) (*node, error) {
+	for _, cneCond := range cne.conditions {
+		result, err := boolEvaluator(cneCond.condition)
 		if err != nil {
 			return nil, err
 		} else if result {
-			return branchNode, nil
+			return cneCond.node, nil
 		}
 	}
 	return cne.elseNode, nil

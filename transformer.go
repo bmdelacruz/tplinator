@@ -19,7 +19,7 @@ func Tplinate(documentReader io.Reader) (*PrecompiledTemplate, error) {
 
 func precompileToNode(documentNode *html.Node) *node {
 	cleanTextNodes(documentNode)
-	return convertToNode(documentNode)
+	return generateEquivalentNode(documentNode)
 }
 
 func cleanTextNodes(node *html.Node) {
@@ -45,23 +45,90 @@ func cleanTextNodes(node *html.Node) {
 	}
 }
 
-func convertToNode(srcNode *html.Node) *node {
+func generateEquivalentNode(srcNode *html.Node) *node {
 	extensions := createExtensions(srcNode)
 
 	noode := createNode(srcNode)
 	noode.extensions = extensions
 
 	for cn := srcNode.FirstChild; cn != nil; cn = cn.NextSibling {
-		noode.AppendChild(convertToNode(cn))
+		noode.AppendChild(generateEquivalentNode(cn)) // FIXME
 	}
 
 	return noode
 }
 
 func createExtensions(srcNode *html.Node) []nodeExtension {
-	// TODO
-	// - check if a child of the srcNode has conditional attribute
-	// - etc
+	var exts []nodeExtension
 
+	// check if a child of the srcNode has conditional attribute
+	if ext := tryCreateConditionalNodeExtension(srcNode); ext != nil {
+		exts = append(exts, ext)
+	}
+
+	return exts
+}
+
+func tryCreateConditionalNodeExtension(srcNode *html.Node) nodeExtension {
+	if ifCond, hasIfCond := tryExtractIfCondition(srcNode); hasIfCond {
+		cne := &conditionalNodeExtension{}
+		cne.conditions = append(cne.conditions, &cneCondition{
+			condition: ifCond,
+			node:      generateEquivalentNode(srcNode),
+		})
+
+		var toBeRemoved []*html.Node
+		for sib := srcNode.NextSibling; sib != nil; sib = sib.NextSibling {
+			if elseIfCond, hasElseIfCond := tryExtractElseIfCondition(sib); hasElseIfCond {
+				toBeRemoved = append(toBeRemoved, sib)
+				cne.conditions = append(cne.conditions, &cneCondition{
+					condition: elseIfCond,
+					node:      generateEquivalentNode(sib),
+				})
+				continue
+			} else if hasElse := tryExtractElse(sib); hasElse {
+				toBeRemoved = append(toBeRemoved, sib)
+				cne.elseNode = generateEquivalentNode(sib)
+			}
+			break
+		}
+
+		srcNode.Parent.RemoveChild(srcNode)
+		for _, tbr := range toBeRemoved {
+			tbr.Parent.RemoveChild(tbr)
+		}
+
+		return cne
+	}
 	return nil
+}
+
+func tryExtractIfCondition(node *html.Node) (string, bool) {
+	for attrIdx, attr := range node.Attr {
+		if attr.Key == "go-if" {
+			node.Attr = append(node.Attr[:attrIdx], node.Attr[attrIdx+1:]...)
+			return attr.Val, true
+		}
+	}
+	return "", false
+}
+
+func tryExtractElseIfCondition(node *html.Node) (string, bool) {
+	for attrIdx, attr := range node.Attr {
+		if attr.Key == "go-elif" || attr.Key == "go-else-if" {
+			node.Attr = append(node.Attr[:attrIdx], node.Attr[attrIdx+1:]...)
+			return attr.Val, true
+		}
+	}
+	return "", false
+}
+
+func tryExtractElse(node *html.Node) bool {
+	for attrIdx, attr := range node.Attr {
+		if attr.Key == "go-else" {
+			node.Attr = append(node.Attr[:attrIdx], node.Attr[attrIdx+1:]...)
+			return true
+		}
+	}
+	return false
 }

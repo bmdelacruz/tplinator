@@ -34,7 +34,7 @@ func createNode(srcNode *html.Node) *node {
 	}
 }
 
-func (n *node) Execute(evaluator evaluator) (string, error) {
+func (n *node) Execute(evaluator evaluator, boolEvaluator boolEvaluator) (string, error) {
 	switch n.nodeType {
 	case html.TextNode:
 		data, err := evaluator(n.data)
@@ -49,7 +49,7 @@ func (n *node) Execute(evaluator evaluator) (string, error) {
 		// going to be used
 		fnode := n // final node
 		for _, ext := range n.extensions {
-			fnode, err := ext.Apply(*fnode, evaluator)
+			fnode, err := ext.Apply(*fnode, evaluator, boolEvaluator)
 			if err != nil {
 				return "", err
 			} else if fnode == nil {
@@ -76,7 +76,7 @@ func (n *node) Execute(evaluator evaluator) (string, error) {
 		}
 		sb.WriteString(">")
 		for cn := fnode.firstChild; cn != nil; cn = cn.nextSibling {
-			cnstr, err := cn.Execute(evaluator)
+			cnstr, err := cn.Execute(evaluator, boolEvaluator)
 			if err != nil {
 				return "", err
 			}
@@ -89,7 +89,7 @@ func (n *node) Execute(evaluator evaluator) (string, error) {
 		var sb strings.Builder
 
 		for cn := n.firstChild; cn != nil; cn = cn.nextSibling {
-			cnstr, err := cn.Execute(evaluator)
+			cnstr, err := cn.Execute(evaluator, boolEvaluator)
 			if err != nil {
 				return "", err
 			}
