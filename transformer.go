@@ -12,19 +12,14 @@ func Tplinate(documentReader io.Reader) (*PrecompiledTemplate, error) {
 	if err != nil {
 		return nil, err
 	}
-	ptNode, err := precompileToNode(documentNode)
-	if err != nil {
-		return nil, err
-	}
 	return &PrecompiledTemplate{
-		documentNode: ptNode,
+		documentNode: precompileToNode(documentNode),
 	}, nil
 }
 
-func precompileToNode(documentNode *html.Node) (*node, error) {
+func precompileToNode(documentNode *html.Node) *node {
 	cleanTextNodes(documentNode)
-
-	return nil, nil
+	return convertToNode(documentNode)
 }
 
 func cleanTextNodes(node *html.Node) {
@@ -48,4 +43,25 @@ func cleanTextNodes(node *html.Node) {
 	for cn := node.FirstChild; cn != nil; cn = cn.NextSibling {
 		cleanTextNodes(cn)
 	}
+}
+
+func convertToNode(srcNode *html.Node) *node {
+	extensions := createExtensions(srcNode)
+
+	noode := createNode(srcNode)
+	noode.extensions = extensions
+
+	for cn := srcNode.FirstChild; cn != nil; cn = cn.NextSibling {
+		noode.AppendChild(convertToNode(cn))
+	}
+
+	return noode
+}
+
+func createExtensions(srcNode *html.Node) []nodeExtension {
+	// TODO
+	// - check if a child of the srcNode has conditional attribute
+	// - etc
+
+	return nil
 }

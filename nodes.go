@@ -22,7 +22,16 @@ type node struct {
 }
 
 func createNode(srcNode *html.Node) *node {
-	return &node{} // TODO
+	attrMap := make(map[string]string)
+	for _, attr := range srcNode.Attr {
+		attrMap[attr.Key] = attr.Val
+	}
+	return &node{
+		nodeType: srcNode.Type,
+		data:     srcNode.Data,
+
+		attributes: attrMap,
+	}
 }
 
 func (n *node) Execute(evaluator evaluator) (string, error) {
@@ -77,7 +86,17 @@ func (n *node) Execute(evaluator evaluator) (string, error) {
 
 		return sb.String(), nil
 	default:
-		return "", nil
+		var sb strings.Builder
+
+		for cn := n.firstChild; cn != nil; cn = cn.nextSibling {
+			cnstr, err := cn.Execute(evaluator)
+			if err != nil {
+				return "", err
+			}
+			sb.WriteString(cnstr)
+		}
+
+		return sb.String(), nil
 	}
 }
 

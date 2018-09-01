@@ -5,19 +5,31 @@ type PrecompiledTemplate struct {
 }
 
 func (pt *PrecompiledTemplate) Execute(data map[string]interface{}) ([]byte, error) {
-	return nil, nil // TODO
+	docStr, err := pt.documentNode.Execute(createEvaluatorFunc(data))
+	if err != nil {
+		return nil, err
+	}
+	return []byte(docStr), nil
 }
 
 func (pt *PrecompiledTemplate) ExecuteStrict(data map[string]interface{}) ([]byte, error) {
-	return nil, nil // TODO
+	docStr, err := pt.documentNode.Execute(createStrictEvaluatorFunc(data))
+	if err != nil {
+		return nil, err
+	}
+	return []byte(docStr), nil
 }
 
 type evaluator func(string) (string, error)
 
-func evaluatorFunc(string) (string, error) {
-	return "", nil // TODO
+func createEvaluatorFunc(params map[string]interface{}) evaluator {
+	return func(data string) (string, error) {
+		return data, nil // TODO
+	}
 }
 
-func strictEvaluatorFunc(string) (string, error) {
-	return "", nil // TODO
+func createStrictEvaluatorFunc(params map[string]interface{}) evaluator {
+	return func(data string) (string, error) {
+		return data, nil // TODO
+	}
 }

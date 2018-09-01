@@ -1,8 +1,20 @@
 <!doctype html>
 <html>
-    <body>
-        <div class="container" go-if="isVisible">
-            <h1 go-class-if-error="hasError">Sample string</h1>
+<head>
+    <title>Hello, world!</title>
+</head>
+<body>
+    <form action="/test/{{go:uid}}" method="POST">
+        <input type="hidden" name="secret" value="{{go:secret}}"/>
+        <input type="hidden" name="confcode" value="{{go:confcode}}"/>
+    </form>
+    <div class="container">
+        <h1 go-if="!shouldBeRendered">INVERTED; This should appear conditionally.</h1>
+        <h2>This should appear conditionally.</h2>
+        <div class="col-sm-4" go-if="shouldBeRendered">
+            <h3>This should appear conditionally.</h3>
+            <h4>Username: {{go:username}}</h4>
         </div>
-    </body>
+    </div>
+</body>
 </html>
