@@ -45,11 +45,13 @@ func (n *node) Execute(evaluator evaluator, boolEvaluator boolEvaluator) (string
 	case html.DoctypeNode:
 		return "<!DOCTYPE html>", nil
 	case html.ElementNode:
+		var err error
+
 		// apply the node's extensions to create the node that's
 		// going to be used
 		fnode := n // final node
 		for _, ext := range n.extensions {
-			fnode, err := ext.Apply(*fnode, evaluator, boolEvaluator)
+			fnode, err = ext.Apply(*fnode, evaluator, boolEvaluator)
 			if err != nil {
 				return "", err
 			} else if fnode == nil {

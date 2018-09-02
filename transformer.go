@@ -2,7 +2,6 @@ package tplinator
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"strings"
 
@@ -50,8 +49,6 @@ func cleanTextNodes(node *html.Node) {
 }
 
 func generateEquivalentNode(srcNode *html.Node) *node {
-	fmt.Println("el proc", srcNode.Data)
-
 	extensions := createExtensions(srcNode)
 	noode := createNode(srcNode)
 	noode.extensions = extensions
@@ -88,9 +85,8 @@ func tryCreateConditionalNodeExtension(srcNode *html.Node) nodeExtension {
 		var elseSibling *html.Node
 		var elifSiblings []*html.Node
 		for sib := srcNode.NextSibling; sib != nil; sib = sib.NextSibling {
-			if hasElseIfCond, elseIfCond := hasAttributeKey(sib, elseIfAttr()); hasElseIfCond {
-				fmt.Println("elif sib proc", sib.Data)
-
+			if hasElseIfCond, _ := hasAttributeKey(sib, elseIfAttr()); hasElseIfCond {
+				_, elseIfCond := tryExtractAttribute(sib, elseIfAttr())
 				cne.conditions = append(cne.conditions, &cneCondition{
 					condition: elseIfCond,
 					node:      generateEquivalentNode(sib),
@@ -103,13 +99,12 @@ func tryCreateConditionalNodeExtension(srcNode *html.Node) nodeExtension {
 					panic(errors.New("found an extraneous else element. please remove it"))
 				}
 
-				fmt.Println("else sib proc", sib.Data)
+				tryExtractAttribute(sib, elseAttr())
 				cne.elseNode = generateEquivalentNode(sib)
 
 				elseSibling = sib
 				continue
 			}
-			// nextNonCondSibling = sib
 			break
 		}
 
@@ -117,11 +112,9 @@ func tryCreateConditionalNodeExtension(srcNode *html.Node) nodeExtension {
 		// extension since they will no longer needed to be attached to
 		// the document node
 		for _, elifSibling := range elifSiblings {
-			fmt.Println("rm elif sib", elifSibling.Data)
 			elifSibling.Parent.RemoveChild(elifSibling)
 		}
 		if elseSibling != nil {
-			fmt.Println("rm else sib", elseSibling.Data)
 			elseSibling.Parent.RemoveChild(elseSibling)
 		}
 
