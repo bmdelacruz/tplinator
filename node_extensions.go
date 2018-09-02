@@ -10,6 +10,7 @@ type nodeExtension interface {
 }
 
 type cneCondition struct {
+	isSelf    bool
 	condition string
 	node      *node
 }
@@ -25,7 +26,12 @@ func (cne *conditionalNodeExtension) Apply(node node, evaluator evaluator, boolE
 		if err != nil {
 			return nil, err
 		} else if result {
+			if cneCond.isSelf {
+				return &node, nil
+			}
 			return cneCond.node, nil
+		} else {
+			break
 		}
 	}
 	return cne.elseNode, nil
