@@ -10,6 +10,8 @@ import (
 )
 
 // FIXME: Self-closing tags are not properly rendered
+// FIXME: The original sequence of elements' attributes are not preserved
+
 func ExampleTemplate_Execute() {
 	sampleHtml := `
 	<!doctype html>
