@@ -10,10 +10,20 @@ import (
 	"github.com/Knetic/govaluate"
 )
 
+// PrecompiledTemplate is a struct which basically holds the information
+// about the original node structure of the parsed HTML document.
 type PrecompiledTemplate struct {
 	documentNode *node
 }
 
+// Execute returns the bytes of the rendered node structure of the underlying
+// HTML document. It evaluates expressions, specified within the HTML document,
+// used by the templating features currently implemented in this package and
+// performs string interpolation on all placeholders found in the HTML document.
+// When the expression evaluation fails or when variable are not present in the
+// `data` parameter, it simply uses the default values, e.g. `false` for boolean
+// value requiring expression, empty string for string value requiring expressions,
+// etc., instead of returning an error and then logs a warning about it.
 func (pt *PrecompiledTemplate) Execute(data map[string]interface{}) ([]byte, error) {
 	docStr, err := pt.documentNode.Execute(
 		createInterpolatorFunc(data),
@@ -25,6 +35,13 @@ func (pt *PrecompiledTemplate) Execute(data map[string]interface{}) ([]byte, err
 	return []byte(docStr), nil
 }
 
+// ExecuteStrict returns the bytes of the rendered node structure of the
+// underlying HTML document. It evaluates expressions, specified within the
+// HTML document, used by the templating features currently implemented in
+// this package and performs string interpolation on all placeholders found
+// in the HTML document. When the expression evaluation fails or when variable
+// are not present in the `data` parameter, it immediately stops the processing
+// of the template and returns an error.
 func (pt *PrecompiledTemplate) ExecuteStrict(data map[string]interface{}) ([]byte, error) {
 	docStr, err := pt.documentNode.Execute(
 		createStrictInterpolatorFunc(data),

@@ -17,8 +17,6 @@ type node struct {
 	data     string
 
 	attributes []attribute
-	// attributeMap map[string]*attribute
-
 	extensions []nodeExtension
 
 	parent      *node
