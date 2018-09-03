@@ -9,9 +9,6 @@ import (
 	"github.com/yosssi/gohtml"
 )
 
-// FIXME: Self-closing tags are not properly rendered
-// FIXME: The original sequence of elements' attributes are not preserved
-
 func ExampleTplinate() {
 	sampleHtml := `
 	<!doctype html>
@@ -25,10 +22,10 @@ func ExampleTplinate() {
 			<input type="hidden" name="confcode" value="{{go:confcode}}"/>
 		</form>
 		<div class="container">
-			<h1 go-if="!shouldBeRendered">INVERTED; This should appear conditionally.</h1>
-			<h2>This should appear conditionally.</h2>
+			<h1 go-if="!shouldBeRendered">shouldBeRendered is equal to false</h1>
+			<h2>shouldBeRendered is equal to true</h2>
 			<div class="col-sm-4" go-if="shouldBeRendered">
-				<h3>This should appear conditionally.</h3>
+				<h3>shouldBeRendered is equal to true</h3>
 				<h4>Username: {{go:username}}</h4>
 			</div>
 		</div>
@@ -68,9 +65,9 @@ func ExampleTplinate() {
 	//       <input type="hidden" name="confcode" value="Y3g1tT3sH-aHQ_rMJOSB7A"/>
 	//     </form>
 	//     <div class="container">
-	//       <h2>This should appear conditionally.</h2>
+	//       <h2>shouldBeRendered is equal to true</h2>
 	//       <div class="col-sm-4">
-	//         <h3>This should appear conditionally.</h3>
+	//         <h3>shouldBeRendered is equal to true</h3>
 	//         <h4>Username: bryanmdlx</h4>
 	//       </div>
 	//     </div>

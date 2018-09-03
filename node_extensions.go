@@ -48,12 +48,13 @@ type conditionalClassNodeExtension struct {
 }
 
 func (ccne *conditionalClassNodeExtension) Apply(node node, interpolator interpolator, evaluator evaluator) (*node, error) {
-	originalClass, hasClass := node.attributes["class"]
+	hasClass, _, originalClass := node.HasAttribute("class")
 	if !hasClass {
 		originalClass = ""
 	} else {
 		originalClass = strings.TrimSpace(originalClass)
 	}
+
 	classes := strings.Fields(originalClass)
 
 	for conditionalExpression, className := range ccne.classConditions {
@@ -72,7 +73,8 @@ func (ccne *conditionalClassNodeExtension) Apply(node node, interpolator interpo
 			classes = append(classes, className)
 		}
 	}
-	node.attributes["class"] = strings.Join(classes, " ")
+
+	node.ReplaceAttribute("class", strings.Join(classes, " "))
 
 	return &node, nil
 }
