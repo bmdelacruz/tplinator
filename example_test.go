@@ -9,6 +9,7 @@ import (
 	"github.com/yosssi/gohtml"
 )
 
+// FIXME: Self-closing tags are not properly rendered
 func ExampleTemplate_Execute() {
 	sampleHtml := `
 	<!doctype html>
@@ -33,7 +34,7 @@ func ExampleTemplate_Execute() {
 	</html>
 	`
 
-	tpl, err := tplinator.CreateTemplate(strings.NewReader(sampleHtml))
+	tpl, err := tplinator.Tplinate(strings.NewReader(sampleHtml))
 	if err != nil {
 		log.Fatal(err)
 	}
