@@ -26,10 +26,20 @@ func main() {
 	tplinateEnd := time.Since(tplinateStart)
 	log.Println("tplinate took", tplinateEnd)
 
-	count := 0
+	params := map[string]interface{}{
+		"hastwo":   false,
+		"hasthree": false,
+		"hasfour":  false,
+
+		"uid":      "22233334234123",
+		"secret":   "asodijfefeaofiasjdosads",
+		"confcode": "sdasdetwet34twfesfsefsee",
+	}
+
+	count := 10000
 	var totalDuration time.Duration
 	for i := 0; i < count; i++ {
-		_, duration := execute(pt)
+		_, duration := execute(pt, params)
 		totalDuration += duration
 
 		log.Println("exec", i, "took", duration)
@@ -38,7 +48,7 @@ func main() {
 		log.Println("exec took avg", time.Duration(int64(totalDuration)/int64(count)))
 	}
 
-	bytes, err := pt.Execute(map[string]interface{}{})
+	bytes, err := pt.Execute(params)
 	if err != nil {
 		panic(err)
 	}
@@ -46,9 +56,9 @@ func main() {
 	fmt.Printf("%s\n", gohtml.FormatBytes(bytes))
 }
 
-func execute(pt *tplinator.PrecompiledTemplate) ([]byte, time.Duration) {
+func execute(pt *tplinator.PrecompiledTemplate, params map[string]interface{}) ([]byte, time.Duration) {
 	execStart := time.Now()
-	bytes, err := pt.Execute(map[string]interface{}{})
+	bytes, err := pt.Execute(params)
 	if err != nil {
 		panic(err)
 	}

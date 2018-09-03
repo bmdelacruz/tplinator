@@ -34,10 +34,10 @@ func createNode(srcNode *html.Node) *node {
 	}
 }
 
-func (n *node) Execute(evaluator evaluator, boolEvaluator boolEvaluator) (string, error) {
+func (n *node) Execute(interpolator interpolator, evaluator evaluator) (string, error) {
 	switch n.nodeType {
 	case html.TextNode:
-		data, err := evaluator(n.data)
+		data, err := interpolator(n.data)
 		if err != nil {
 			return "", err
 		}
@@ -51,7 +51,7 @@ func (n *node) Execute(evaluator evaluator, boolEvaluator boolEvaluator) (string
 		// going to be used
 		fnode := n // final node
 		for _, ext := range n.extensions {
-			fnode, err = ext.Apply(*fnode, evaluator, boolEvaluator)
+			fnode, err = ext.Apply(*fnode, interpolator, evaluator)
 			if err != nil {
 				return "", err
 			} else if fnode == nil {
@@ -62,7 +62,7 @@ func (n *node) Execute(evaluator evaluator, boolEvaluator boolEvaluator) (string
 		// evaluate string interpolatons in attributes
 		attributes := copyAttributes(fnode.attributes)
 		for ak, av := range attributes {
-			evaluatedAv, err := evaluator(av)
+			evaluatedAv, err := interpolator(av)
 			if err != nil {
 				return "", err
 			}
@@ -78,7 +78,7 @@ func (n *node) Execute(evaluator evaluator, boolEvaluator boolEvaluator) (string
 		}
 		sb.WriteString(">")
 		for cn := fnode.firstChild; cn != nil; cn = cn.nextSibling {
-			cnstr, err := cn.Execute(evaluator, boolEvaluator)
+			cnstr, err := cn.Execute(interpolator, evaluator)
 			if err != nil {
 				return "", err
 			}
@@ -91,7 +91,7 @@ func (n *node) Execute(evaluator evaluator, boolEvaluator boolEvaluator) (string
 		var sb strings.Builder
 
 		for cn := n.firstChild; cn != nil; cn = cn.nextSibling {
-			cnstr, err := cn.Execute(evaluator, boolEvaluator)
+			cnstr, err := cn.Execute(interpolator, evaluator)
 			if err != nil {
 				return "", err
 			}
