@@ -1,0 +1,19 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.11.0
+    working_directory: ~/github.com/bmdelacruz/tplinator
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-{{ .Environment.CACHE_VERSION }}-{{ checksum "go.sum" }}
+            - go-mod-{{ .Environment.CACHE_VERSION }}-default
+      - run: go test -v -cover -race -coverprofile=/tmp/coverage.out
+      - run: go get github.com/mattn/goveralls
+      - save_cache:
+          key: go-mod-{{ .Environment.CACHE_VERSION }}-{{ checksum "go.sum" }}
+          paths:
+            - /go
+      - run: /go/bin/goveralls -coverprofile=/tmp/coverage.out -service=circle-ci -repotoken=$COVERALLS_REPO_TOKEN
