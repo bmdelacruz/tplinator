@@ -2,21 +2,20 @@ package tplinator
 
 import (
 	"errors"
-	"io"
 	"strings"
 
 	"golang.org/x/net/html"
 )
 
-func Tplinate(documentReader io.Reader) (*PrecompiledTemplate, error) {
-	documentNode, err := html.Parse(documentReader)
-	if err != nil {
-		return nil, err
-	}
-	return &PrecompiledTemplate{
-		documentNode: precompileToNode(documentNode),
-	}, nil
-}
+// Template related constants
+const (
+	attributePrefix    = "go-"
+	ifAttributeKey     = attributePrefix + "if"
+	elseIfAttributeKey = attributePrefix + "else-if"
+	elifAttributeKey   = attributePrefix + "elif"
+	elseAttributeKey   = attributePrefix + "else"
+	rangeAttributeKey  = attributePrefix + "range"
+)
 
 func precompileToNode(documentNode *html.Node) *node {
 	cleanTextNodes(documentNode)
@@ -125,15 +124,15 @@ func tryCreateConditionalNodeExtension(srcNode *html.Node) nodeExtension {
 }
 
 func ifAttr() func(string) bool {
-	return equalToOneOf("go-if")
+	return equalToOneOf(ifAttributeKey)
 }
 
 func elseIfAttr() func(string) bool {
-	return equalToOneOf("go-elif", "go-else-if")
+	return equalToOneOf(elifAttributeKey, elseIfAttributeKey)
 }
 
 func elseAttr() func(string) bool {
-	return equalToOneOf("go-else")
+	return equalToOneOf(elseAttributeKey)
 }
 
 func hasAttributeKey(node *html.Node, checker func(string) bool) (bool, string) {

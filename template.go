@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/Knetic/govaluate"
@@ -63,6 +64,17 @@ func createStrictEvaluatorFunc(params map[string]interface{}) evaluator {
 		return evaluate(data, params, true)
 	}
 }
+
+// Interpolation related constants
+const (
+	interpolationStart = "{{go:"
+	interpolationEnd   = "}}"
+)
+
+// Interpolation related global variables
+var (
+	interpolationRegexPattern = regexp.MustCompile(interpolationStart + "[\\d\\w]+" + interpolationEnd)
+)
 
 func interpolate(expression string, params map[string]interface{}, strict bool) (string, error) {
 	var hasWarning bool
