@@ -16,6 +16,8 @@ type node struct {
 	nodeType html.NodeType
 	data     string
 
+	isSelfClosingFlag bool
+
 	attributes []attribute
 	extensions []nodeExtension
 
