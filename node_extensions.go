@@ -1,80 +1,84 @@
 package tplinator
 
-import (
-	"fmt"
-	"strings"
-)
-
-type nodeExtension interface {
-	Apply(node node, interpolator interpolator, evaluator evaluator) (*node, error)
+type Extension interface {
+	Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, error)
 }
 
-type cneCondition struct {
-	isSelf    bool
-	condition string
-	node      *node
+type conditionalExtensionCondition struct {
+	node                  *Node
+	conditionalExpression string
 }
 
-type conditionalNodeExtension struct {
-	conditions []*cneCondition
-	elseNode   *node
+type ConditionalExtension struct {
+	conditions []conditionalExtensionCondition
+	elseNode   *Node
 }
 
-func (cne *conditionalNodeExtension) Apply(node node, interpolator interpolator, evaluator evaluator) (*node, error) {
-	for _, cneCond := range cne.conditions {
-		result, err := evaluator(cneCond.condition)
+func (ce *ConditionalExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, error) {
+	for _, condition := range ce.conditions {
+		evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
+		result, err := evaluator.EvaluateBool(condition.conditionalExpression, params)
 		if err != nil {
-			if err != errEvaluationFailed {
-				return nil, err
-			}
-			result = false // provide default value
-			logDefaultValueWarning(cneCond.condition, result)
-		}
-		boolResult, isBool := result.(bool)
-		if !isBool {
-			return nil, fmt.Errorf("error: the result of `%v` is not of boolean type", cneCond.condition)
-		} else if boolResult {
-			if cneCond.isSelf {
-				return &node, nil
-			}
-			return cneCond.node, nil
+			return nil, err
+		} else if result {
+			return condition.node, nil
 		}
 	}
-	return cne.elseNode, nil
+	return ce.elseNode, nil
 }
 
-type conditionalClassNodeExtension struct {
-	classConditions map[string]string
+func (ce *ConditionalExtension) addCondition(condition string, node *Node) {
+	ce.conditions = append(ce.conditions, conditionalExtensionCondition{
+		node:                  node,
+		conditionalExpression: condition,
+	})
 }
 
-func (ccne *conditionalClassNodeExtension) Apply(node node, interpolator interpolator, evaluator evaluator) (*node, error) {
-	hasClass, _, originalClass := node.HasAttribute("class")
-	if !hasClass {
-		originalClass = ""
-	} else {
-		originalClass = strings.TrimSpace(originalClass)
-	}
+func ConditionalExtensionNodeProcessor(node *Node) {
+	if hasAttribute, _, ifCondition := node.HasAttribute("go-if"); hasAttribute {
+		condBranchSiblings := make([]*Node, 0)
+		conditionalExtension := &ConditionalExtension{}
 
-	classes := strings.Fields(originalClass)
+		node.RemoveAttribute("go-if")
+		conditionalExtension.addCondition(ifCondition, node)
 
-	for conditionalExpression, className := range ccne.classConditions {
-		result, err := evaluator(conditionalExpression)
-		if err != nil {
-			if err != errEvaluationFailed {
-				return nil, err
+		node.NextSiblings(func(sibling *Node) bool {
+			hasElifAttr, _, elifCondition := sibling.HasAttribute("go-elif")
+			hasElseIfAttr, _, elseIfCondition := sibling.HasAttribute("go-else-if")
+
+			if hasElifAttr {
+				sibling.RemoveAttribute("go-elif")
+				conditionalExtension.addCondition(elifCondition, sibling)
+			} else if hasElseIfAttr {
+				sibling.RemoveAttribute("go-else-if")
+				conditionalExtension.addCondition(elseIfCondition, sibling)
+			} else if hasElseAttr, _, _ := sibling.HasAttribute("go-else"); hasElseAttr {
+				sibling.RemoveAttribute("go-else")
+				conditionalExtension.elseNode = sibling
+
+				condBranchSiblings = append(condBranchSiblings, sibling)
+
+				return false
+			} else {
+				return false
 			}
-			result = false // provide default value
-			logDefaultValueWarning(conditionalExpression, result)
-		}
-		boolResult, isBool := result.(bool)
-		if !isBool {
-			return nil, fmt.Errorf("error: the result of `%v` is not of boolean type", conditionalExpression)
-		} else if boolResult {
-			classes = append(classes, className)
+
+			condBranchSiblings = append(condBranchSiblings, sibling)
+			return true
+		})
+
+		node.AddExtension(conditionalExtension)
+
+		for _, condBranchSibling := range condBranchSiblings {
+			condBranchSibling.Parent().RemoveChild(condBranchSibling)
 		}
 	}
+}
 
-	node.ReplaceAttribute("class", strings.Join(classes, " "))
+func ConditionalClassExtensionNodeProcessor(node *Node) {
+	// TODO
+}
 
-	return &node, nil
+func RangeExtensionNodeProcessor(node *Node) {
+	// TODO
 }

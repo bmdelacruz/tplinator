@@ -1,21 +1,24 @@
 package tplinator
 
-import (
-	"io"
+import "io"
 
-	"golang.org/x/net/html"
-)
+func Tplinate(tplReader io.Reader, parserOptions ...ParserOptionFunc) (*Template, error) {
+	defaultParserOptions := []ParserOptionFunc{
+		NodeProcessorsParserOption(
+			ConditionalExtensionNodeProcessor,
+			ConditionalClassExtensionNodeProcessor,
+			RangeExtensionNodeProcessor,
+		),
+	}
+	defaultParserOptions = append(defaultParserOptions, parserOptions...)
 
-// Tplinate parses the provided HTML document using the `html.Parse`
-// function, duplicates the HTML document's node structure into a more
-// manipulatable node structure, and then returns a pointer to a
-// `PrecompiledTemplate` struct instance if successful.
-func Tplinate(documentReader io.Reader) (*PrecompiledTemplate, error) {
-	documentNode, err := html.Parse(documentReader)
+	template, err := CreateTemplateFromReader(tplReader, defaultParserOptions...)
 	if err != nil {
 		return nil, err
 	}
-	return &PrecompiledTemplate{
-		documentNode: precompileToNode(documentNode),
-	}, nil
+	template.extDeps = compoundExtensionDependencies{
+		defaultExtDep: NewDefaultExtensionDependencies(),
+	}
+
+	return template, nil
 }
