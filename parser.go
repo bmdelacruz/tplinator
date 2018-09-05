@@ -33,7 +33,7 @@ type Parser struct {
 	isStrict bool // TODO: use strictness value
 }
 
-func ParseTemplate(rdr io.Reader, opts ...ParserOptionFunc) ([]*Node, error) {
+func ParseNodes(rdr io.Reader, opts ...ParserOptionFunc) ([]*Node, error) {
 	parser := Parser{
 		tokenizer: html.NewTokenizer(rdr),
 	}

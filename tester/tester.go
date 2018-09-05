@@ -16,14 +16,12 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	rootNodes, err := tplinator.ParseTemplate(templateFile)
+	rootNodes, err := tplinator.ParseNodes(templateFile)
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	for _, rootNode := range rootNodes {
 		printNode(rootNode)
-
 	}
 }
 
