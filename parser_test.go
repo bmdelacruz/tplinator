@@ -14,38 +14,124 @@ func TestParseTemplate(t *testing.T) {
 		inputString string
 
 		parserOptionFuncs []tplinator.ParserOptionFunc
-		testerFunc        func(t *testing.T, rootNodes []*tplinator.Node)
+		testerFunc        func(t *testing.T, rootNodes []*tplinator.Node, err error)
 	}{
 		{
-			name:        "simple H1",
-			inputString: `<h1>Hello, world!</h1>`,
+			name:        "simple h1",
+			inputString: `<h1></h1>`,
 
 			parserOptionFuncs: nil,
-			testerFunc: func(t *testing.T, rootNodes []*tplinator.Node) {
-				if len(rootNodes) != 1 {
+			testerFunc: func(t *testing.T, rootNodes []*tplinator.Node, err error) {
+				if err != nil {
+					t.Errorf("failed to parse input. cause: %v", err)
+				} else if len(rootNodes) != 1 {
 					t.Errorf("failed to parse input correctly. rootNodes: %+v", rootNodes)
-					return
-				}
-
-				h1Node := rootNodes[0]
-
-				h1NodeChildren := make([]*tplinator.Node, 0)
-				h1Node.Children(func(_ int, child *tplinator.Node) bool {
-					h1NodeChildren = append(h1NodeChildren, child)
-					return true
-				})
-
-				if h1Node.Data != "h1" || len(h1NodeChildren) != 1 {
+				} else if h1Node := rootNodes[0]; h1Node.Data != "h1" {
 					t.Errorf("failed to parse input correctly. h1Node: %+v", *h1Node)
-					return
 				}
+			},
+		},
+		{
+			name:        "doctype",
+			inputString: `<!doctype html>`,
 
-				h1TextNode := h1NodeChildren[0]
-				expectedText := "Hello, world!"
+			parserOptionFuncs: nil,
+			testerFunc: func(t *testing.T, rootNodes []*tplinator.Node, err error) {
+				if err != nil {
+					t.Errorf("failed to parse input. cause: %v", err)
+				} else if len(rootNodes) != 1 {
+					t.Errorf("failed to parse input correctly. rootNodes: %+v", rootNodes)
+				} else if doctypeNode := rootNodes[0]; doctypeNode.Type != html.DoctypeNode || doctypeNode.Data != "html" {
+					t.Errorf("failed to parse input correctly. doctypeNode: %+v", *doctypeNode)
+				}
+			},
+		},
+		{
+			name:        "self-closing element (img)",
+			inputString: `<img />`,
 
-				if h1TextNode.Type != html.TextNode || h1TextNode.Data != expectedText {
-					t.Errorf("failed to parse input correctly. got %v, wanted `%v`",
-						h1TextNode.Data, expectedText)
+			parserOptionFuncs: nil,
+			testerFunc: func(t *testing.T, rootNodes []*tplinator.Node, err error) {
+				if err != nil {
+					t.Errorf("failed to parse input. cause: %v", err)
+				} else if len(rootNodes) != 1 {
+					t.Errorf("failed to parse input correctly. rootNodes: %+v", rootNodes)
+				} else if imgNode := rootNodes[0]; imgNode.Type != html.ElementNode || imgNode.Data != "img" {
+					t.Errorf("failed to parse input correctly. imgNode: %+v", *imgNode)
+				}
+			},
+		},
+		{
+			name:        "comment",
+			inputString: `<!--some comment-->`,
+
+			parserOptionFuncs: nil,
+			testerFunc: func(t *testing.T, rootNodes []*tplinator.Node, err error) {
+				if err != nil {
+					t.Errorf("failed to parse input. cause: %v", err)
+				} else if len(rootNodes) != 0 {
+					t.Errorf("failed to parse input correctly. rootNodes: %+v", rootNodes)
+				}
+			},
+		},
+		{
+			name:        "node processor",
+			inputString: `<h1 go-if="isMorning">hello</h1>`,
+
+			parserOptionFuncs: []tplinator.ParserOptionFunc{
+				tplinator.NodeProcessorsParserOption(
+					tplinator.ConditionalExtensionNodeProcessor,
+				),
+			},
+			testerFunc: func(t *testing.T, rootNodes []*tplinator.Node, err error) {
+				if err != nil {
+					t.Errorf("failed to parse input. cause: %v", err)
+				} else if len(rootNodes) != 1 {
+					t.Errorf("failed to parse input correctly. rootNodes: %+v", rootNodes)
+				}
+			},
+		},
+		{
+			name:        "reach eof",
+			inputString: `<h1>hell`,
+
+			parserOptionFuncs: nil,
+			testerFunc: func(t *testing.T, rootNodes []*tplinator.Node, err error) {
+				if err == nil {
+					t.Error("expecting an error because input string unexpectedly ended")
+				}
+			},
+		},
+		{
+			name:        "incorrect doctype",
+			inputString: `<img/><!doctype html>`,
+
+			parserOptionFuncs: nil,
+			testerFunc: func(t *testing.T, rootNodes []*tplinator.Node, err error) {
+				if err == nil {
+					t.Error("expecting an error because doctype is not the first element")
+				}
+			},
+		},
+		{
+			name:        "tag mismatch",
+			inputString: `<h1></h2>`,
+
+			parserOptionFuncs: nil,
+			testerFunc: func(t *testing.T, rootNodes []*tplinator.Node, err error) {
+				if err == nil {
+					t.Error("expecting an error because the start tag and end tag does not match")
+				}
+			},
+		},
+		{
+			name:        "missing start tag",
+			inputString: `</h2>`,
+
+			parserOptionFuncs: nil,
+			testerFunc: func(t *testing.T, rootNodes []*tplinator.Node, err error) {
+				if err == nil {
+					t.Error("expecting an error because an end tag was found but there was no pending start tag")
 				}
 			},
 		},
@@ -55,12 +141,9 @@ func TestParseTemplate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			rootNodes, err := tplinator.ParseNodes(
 				strings.NewReader(tc.inputString),
+				tc.parserOptionFuncs...,
 			)
-			if err != nil {
-				t.Errorf("failed to parse input. cause: %v", err)
-			} else {
-				tc.testerFunc(t, rootNodes)
-			}
+			tc.testerFunc(t, rootNodes, err)
 		})
 	}
 }
