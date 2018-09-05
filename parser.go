@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/golang-collections/collections/stack"
+	"github.com/alediaferia/stackgo"
 	"golang.org/x/net/html"
 )
 
@@ -44,14 +44,14 @@ func ParseTemplate(rdr io.Reader, opts ...ParserOptionFunc) ([]*Node, error) {
 }
 
 func (p Parser) parse() ([]*Node, error) {
-	parserStack := stack.New()
+	parserStack := stackgo.NewStack()
 	templateNodes := make([]*Node, 0)
 
 	postProcessThenAddNode := func(newNode *Node) {
 		for _, processNode := range p.nodeProcessors {
 			processNode(newNode)
 		}
-		if top := parserStack.Peek(); top != nil {
+		if top := parserStack.Top(); top != nil {
 			top.(*Node).AppendChild(newNode)
 		} else {
 			templateNodes = append(templateNodes, newNode)
@@ -65,7 +65,7 @@ func (p Parser) parse() ([]*Node, error) {
 		if err != nil {
 			if err != io.EOF {
 				return templateNodes, err
-			} else if parserStack.Len() > 0 {
+			} else if parserStack.Size() > 0 {
 				return templateNodes, errors.New(
 					"parser: reached the end of the file unexpectedly",
 				)
@@ -92,7 +92,7 @@ func (p Parser) parse() ([]*Node, error) {
 		case html.DoctypeToken:
 			// the doctype token should be the first token to be found
 			// if the template is a complete HTML document
-			if parserStack.Peek() != nil && len(templateNodes) > 0 {
+			if parserStack.Top() != nil && len(templateNodes) > 0 {
 				return templateNodes, errors.New(
 					"parser: unexpectedly found a doctype",
 				)
@@ -118,7 +118,7 @@ func (p Parser) parse() ([]*Node, error) {
 			postProcessThenAddNode(newNode)
 			parserStack.Push(newNode)
 		case html.EndTagToken:
-			if top := parserStack.Peek(); top != nil {
+			if top := parserStack.Top(); top != nil {
 				currentNode := top.(*Node)
 				token := p.tokenizer.Token()
 
