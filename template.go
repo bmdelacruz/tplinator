@@ -3,38 +3,13 @@ package tplinator
 import (
 	"bytes"
 	"io"
-	"os"
-	"strings"
 
 	"github.com/alediaferia/stackgo"
 )
 
-type Evaluator interface {
-	EvaluateBool(input string) (bool, error)
-	EvaluateString(input string) (string, error)
-	Evaluate(input string) (interface{}, error)
-}
-
 type Template struct {
 	rootNodes []*Node
-
-	extDeps ExtensionDependencies // TODO
-}
-
-func CreateTemplateFromString(tplStr string, parserOptions ...ParserOptionFunc) (*Template, error) {
-	return CreateTemplateFromReader(strings.NewReader(tplStr), parserOptions...)
-}
-
-func CreateTemplateFromBytes(tplBytes []byte, parserOptions ...ParserOptionFunc) (*Template, error) {
-	return CreateTemplateFromReader(bytes.NewReader(tplBytes), parserOptions...)
-}
-
-func CreateTemplateFromFile(tplFilePath string, parserOptions ...ParserOptionFunc) (*Template, error) {
-	tplFile, err := os.Open(tplFilePath)
-	if err != nil {
-		return nil, err
-	}
-	return CreateTemplateFromReader(tplFile, parserOptions...)
+	extDeps   compoundExtensionDependencies
 }
 
 func CreateTemplateFromReader(reader io.Reader, parserOptions ...ParserOptionFunc) (*Template, error) {
@@ -47,12 +22,16 @@ func CreateTemplateFromReader(reader io.Reader, parserOptions ...ParserOptionFun
 	}, nil
 }
 
-func (tpl *Template) Execute(params map[string]interface{}) ([]byte, error) {
+func (tpl *Template) AddExtensionDependencies(extDeps ...ExtensionDependencies) {
+	tpl.extDeps.extDeps = append(tpl.extDeps.extDeps, extDeps...)
+}
+
+func (tpl *Template) Render(params EvaluatorParams) ([]byte, error) {
 	var bb bytes.Buffer
 
 	tagStack := stackgo.NewStack()
-	pushNode := func(node *Node, deps ExtensionDependencies) error {
-		node, err := node.ApplyExtensions(deps)
+	pushNode := func(node *Node) error {
+		node, err := node.ApplyExtensions(&tpl.extDeps, params)
 		if err != nil {
 			return err
 		} else if node == nil {
@@ -68,8 +47,8 @@ func (tpl *Template) Execute(params map[string]interface{}) ([]byte, error) {
 		return nil
 	}
 
-	for i := len(tpl.rootNodes) - 1; i >= 0; i-- {
-		err := pushNode(tpl.rootNodes[i], tpl.extDeps)
+	for _, rootNode := range tpl.rootNodes {
+		err := pushNode(rootNode)
 		if err != nil {
 			return nil, err
 		}
@@ -84,7 +63,7 @@ func (tpl *Template) Execute(params map[string]interface{}) ([]byte, error) {
 					return true
 				})
 				for i := len(children) - 1; i >= 0; i-- {
-					err := pushNode(children[i], tpl.extDeps)
+					err := pushNode(children[i])
 					if err != nil {
 						return nil, err
 					}

@@ -1,3 +1,5 @@
+github.com/Knetic/govaluate v3.0.0+incompatible h1:7o6+MAPhYTCF0+fdvoz1xDedhRb4f6s9Tn1Tt7/WTEg=
+github.com/Knetic/govaluate v3.0.0+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/alediaferia/stackgo v1.1.1 h1:3MYQttCZdRk4eDVH7otOMajXRvDsxP/bJjtDvCQhaz8=
 github.com/alediaferia/stackgo v1.1.1/go.mod h1:NW+nJN9FW9DahZsLWmbN/YFKpbhEu9AAyNlDVHIWGLo=
 github.com/yosssi/gohtml v0.0.0-20180130040904-97fbf36f4aa8 h1:OlIHDBRrlQk8fHa662oG2gzOO/ixBRU9sLht/M9kzK0=

@@ -1,15 +1,7 @@
 package tplinator
 
-const (
-	evaluatorExtDepKey = "evaluator"
-)
-
-type ExtensionDependencies interface {
-	Get(dependencyKey string) interface{}
-}
-
 type Extension interface {
-	Apply(node *Node, dependencies ExtensionDependencies) (*Node, error)
+	Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, error)
 }
 
 type conditionalExtensionCondition struct {
@@ -22,10 +14,10 @@ type ConditionalExtension struct {
 	elseNode   *Node
 }
 
-func (ce *ConditionalExtension) Apply(node *Node, dependencies ExtensionDependencies) (*Node, error) {
+func (ce *ConditionalExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, error) {
 	for _, condition := range ce.conditions {
 		evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
-		result, err := evaluator.EvaluateBool(condition.conditionalExpression)
+		result, err := evaluator.EvaluateBool(condition.conditionalExpression, params)
 		if err != nil {
 			return nil, err
 		} else if result {
@@ -81,4 +73,12 @@ func ConditionalExtensionNodeProcessor(node *Node) {
 			condBranchSibling.Parent().RemoveChild(condBranchSibling)
 		}
 	}
+}
+
+func ConditionalClassExtensionNodeProcessor(node *Node) {
+	// TODO
+}
+
+func RangeExtensionNodeProcessor(node *Node) {
+	// TODO
 }

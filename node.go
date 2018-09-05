@@ -110,12 +110,12 @@ func (n *Node) AddExtension(extension Extension) {
 	n.extensions = append(n.extensions, extension)
 }
 
-func (n *Node) ApplyExtensions(dependencies ExtensionDependencies) (*Node, error) {
+func (n *Node) ApplyExtensions(dependencies ExtensionDependencies, params EvaluatorParams) (*Node, error) {
 	var err error
 
 	finalNode := n
 	for _, extension := range n.extensions {
-		finalNode, err = extension.Apply(finalNode, dependencies)
+		finalNode, err = extension.Apply(finalNode, dependencies, params)
 		if err != nil {
 			return nil, err
 		}

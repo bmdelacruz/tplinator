@@ -21,7 +21,7 @@ type NodeProcessorFunc func(*Node)
 
 func NodeProcessorsParserOption(npfs ...NodeProcessorFunc) ParserOptionFunc {
 	return func(p *Parser) {
-		p.nodeProcessors = npfs
+		p.nodeProcessors = append(p.nodeProcessors, npfs...)
 	}
 }
 

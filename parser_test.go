@@ -53,7 +53,7 @@ func TestParseTemplate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			rootNodes, err := tplinator.ParseTemplate(
+			rootNodes, err := tplinator.ParseNodes(
 				strings.NewReader(tc.inputString),
 			)
 			if err != nil {
