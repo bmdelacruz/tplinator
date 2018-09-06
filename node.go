@@ -43,6 +43,22 @@ func CreateNode(
 	}
 }
 
+func CopyNode(node *Node) *Node {
+	nodeCopy := &Node{
+		Data: node.Data,
+		Type: node.Type,
+
+		isSelfClosing: node.isSelfClosing,
+	}
+	for _, attr := range node.attributes {
+		nodeCopy.attributes = append(nodeCopy.attributes, attr)
+	}
+	for _, ext := range node.extensions {
+		nodeCopy.extensions = append(nodeCopy.extensions, ext)
+	}
+	return nodeCopy
+}
+
 func (n Node) Parent() *Node {
 	return n.parent
 }
