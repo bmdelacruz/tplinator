@@ -12,8 +12,9 @@ type Node struct {
 
 	isSelfClosing bool
 
-	attributes []Attribute
-	extensions []Extension
+	attributes    []Attribute
+	extensions    []Extension
+	contextParams EvaluatorParams
 
 	parent      *Node
 	firstChild  *Node
@@ -57,6 +58,14 @@ func CopyNode(node *Node) *Node {
 		nodeCopy.extensions = append(nodeCopy.extensions, ext)
 	}
 	return nodeCopy
+}
+
+func (n Node) ContextParams() EvaluatorParams {
+	return n.contextParams
+}
+
+func (n *Node) SetContextParams(contextParams EvaluatorParams) {
+	n.contextParams = contextParams
 }
 
 func (n Node) Parent() *Node {
