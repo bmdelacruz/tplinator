@@ -5,7 +5,7 @@ import (
 )
 
 type Extension interface {
-	Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, error)
+	Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error)
 }
 
 type conditionalExtensionCondition struct {
@@ -18,17 +18,17 @@ type ConditionalExtension struct {
 	elseNode   *Node
 }
 
-func (ce *ConditionalExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, error) {
+func (ce *ConditionalExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
 	for _, condition := range ce.conditions {
 		evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
 		result, err := evaluator.EvaluateBool(condition.conditionalExpression, params)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		} else if result {
-			return condition.node, nil
+			return condition.node, nil, nil
 		}
 	}
-	return ce.elseNode, nil
+	return ce.elseNode, nil, nil
 }
 
 func (ce *ConditionalExtension) addCondition(condition string, node *Node) {
@@ -89,7 +89,7 @@ type ConditionalClassExtension struct {
 	conditionalClasses []conditionalClassExtensionCondition
 }
 
-func (ce *ConditionalClassExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, error) {
+func (ce *ConditionalClassExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
 	var appliedClasses []string
 	copyNode := *node
 
@@ -98,7 +98,7 @@ func (ce *ConditionalClassExtension) Apply(node *Node, dependencies ExtensionDep
 		evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
 		result, err := evaluator.EvaluateBool(conditionalClass.conditionalExpression, params)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		} else if result {
 			appliedClasses = append(appliedClasses, conditionalClass.className)
 		}
@@ -106,7 +106,7 @@ func (ce *ConditionalClassExtension) Apply(node *Node, dependencies ExtensionDep
 	if len(appliedClasses) > 0 {
 		copyNode.AddAttribute("class", strings.Join(appliedClasses, " "))
 	}
-	return &copyNode, nil
+	return &copyNode, nil, nil
 }
 
 func ConditionalClassExtensionNodeProcessor(node *Node) {

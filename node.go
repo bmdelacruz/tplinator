@@ -110,17 +110,19 @@ func (n *Node) AddExtension(extension Extension) {
 	n.extensions = append(n.extensions, extension)
 }
 
-func (n *Node) ApplyExtensions(dependencies ExtensionDependencies, params EvaluatorParams) (*Node, error) {
+func (n *Node) ApplyExtensions(dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
+	var sibs, siblings []*Node
 	var err error
 
 	finalNode := n
 	for _, extension := range n.extensions {
-		finalNode, err = extension.Apply(finalNode, dependencies, params)
+		finalNode, sibs, err = extension.Apply(finalNode, dependencies, params)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+		siblings = append(siblings, sibs...)
 	}
-	return finalNode, nil
+	return finalNode, siblings, nil
 }
 
 func (n Node) Attributes() []Attribute {

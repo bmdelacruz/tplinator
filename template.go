@@ -49,25 +49,38 @@ func (tpl *Template) RenderString(params EvaluatorParams) (string, error) {
 
 func (tpl *Template) Render(params EvaluatorParams, writerFunc func(string)) error {
 	tagStack := stackgo.NewStack()
-	pushNode := func(node *Node) error {
-		node, err := node.ApplyExtensions(&tpl.extDeps, params)
-		if err != nil {
-			return err
-		} else if node == nil {
-			return nil
-		}
 
+	pushNode := func(node *Node) {
+		if node == nil {
+			return
+		}
 		st, et := node.Tags()
 		if et != "" {
 			tagStack.Push(tplEndTag{tag: et})
 		}
 		tagStack.Push(tplStartTag{node: node, tag: st})
-
+	}
+	applyNodeExts := func(node *Node) error {
+		node, sibs, err := node.ApplyExtensions(&tpl.extDeps, params)
+		if err != nil {
+			return err
+		} else if node != nil {
+			for i := len(sibs) - 1; i >= 0; i-- {
+				// ignore siblings of the new siblings. they're stupid
+				node, _, err := node.ApplyExtensions(&tpl.extDeps, params)
+				if err != nil {
+					return err
+				} else if node != nil {
+					pushNode(node)
+				}
+			}
+			pushNode(node)
+		}
 		return nil
 	}
 
 	for _, rootNode := range tpl.rootNodes {
-		err := pushNode(rootNode)
+		err := applyNodeExts(rootNode)
 		if err != nil {
 			return err
 		}
@@ -82,7 +95,7 @@ func (tpl *Template) Render(params EvaluatorParams, writerFunc func(string)) err
 					return true
 				})
 				for i := len(children) - 1; i >= 0; i-- {
-					err := pushNode(children[i])
+					err := applyNodeExts(children[i])
 					if err != nil {
 						return err
 					}
