@@ -4,10 +4,13 @@
         <title>Hello, world!</title>
     </head>
     <body>
-        <div class="animal">
-            <img src="/static/images/cat.png"/>
-            <h1>{{go:food.name}}</h1>
-            <p>{{go:food.description}}</p>
+        <div class="pets" go-if="hasPets">
+            <div class="pet">
+                <img src="{{go:pet.imgurl}}"/>
+                <h1>{{go:pet.name}}</h1>
+                <p>{{go:pet.description}}</p>
+            </div>
         </div>
+        <p go-else>You don't have any pets.</p>
     </body>
 </html>
