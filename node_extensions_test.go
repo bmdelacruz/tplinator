@@ -175,6 +175,35 @@ func TestNodeExtension_ConditionalClass(t *testing.T) {
 	}
 }
 
+func TestNodeExtension_Range(t *testing.T) {
+	extdep := tplinator.NewDefaultExtensionDependencies()
+	params := make(map[string]interface{})
+
+	divNode := tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
+		html.Attribute{Key: "go-range", Val: "pet in pets"},
+	}, false)
+	tplinator.RangeExtensionNodeProcessor(divNode)
+
+	params["pets"] = tplinator.RangeParams(
+		tplinator.EvaluatorParams{
+			"name": "catdog",
+			"age":  "1",
+		},
+		tplinator.EvaluatorParams{
+			"name": "felycat",
+			"age":  "2",
+		},
+	)
+	_, nodes, err := divNode.ApplyExtensions(extdep, params)
+	if err != nil {
+		t.Errorf("failed to apply range extension. cause: %v", err)
+		return
+	} else if len(nodes) != 2 {
+		t.Errorf("expected 2 new nodes")
+		return
+	}
+}
+
 func TestNodeExtension_StringInterpolation(t *testing.T) {
 	extdep := tplinator.NewDefaultExtensionDependencies()
 	params := make(map[string]interface{})

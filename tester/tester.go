@@ -27,12 +27,23 @@ func main() {
 	duration = time.Since(startTime)
 	fmt.Println("tplinated:", duration)
 
+	pets := tplinator.RangeParams(
+		tplinator.EvaluatorParams{
+			"name":        "Larry",
+			"description": "A wonderful dog",
+			"imgurl":      "/images/dog.png",
+		},
+		tplinator.EvaluatorParams{
+			"name":        "Perry",
+			"description": "My best friend",
+			"imgurl":      "/images/platypus.png",
+		},
+	)
+
 	startTime = time.Now()
 	str, err := tpl.RenderString(map[string]interface{}{
-		"hasPets":     true,
-		"name":        "Larry",
-		"description": "A wonderful dog",
-		"imgurl":      "/images/dog.png",
+		"hasPets": len(pets) > 0,
+		"pets":    pets,
 	})
 	if err != nil {
 		log.Fatalln(err)
