@@ -3,6 +3,7 @@ package tplinator
 import (
 	"bytes"
 	"io"
+	"strings"
 
 	"github.com/alediaferia/stackgo"
 )
@@ -26,9 +27,27 @@ func (tpl *Template) AddExtensionDependencies(extDeps ...ExtensionDependencies) 
 	tpl.extDeps.extDeps = append(tpl.extDeps.extDeps, extDeps...)
 }
 
-func (tpl *Template) Render(params EvaluatorParams) ([]byte, error) {
+func (tpl *Template) RenderBytes(params EvaluatorParams) ([]byte, error) {
 	var bb bytes.Buffer
+	if err := tpl.Render(params, func(str string) {
+		bb.WriteString(str)
+	}); err != nil {
+		return nil, err
+	}
+	return bb.Bytes(), nil
+}
 
+func (tpl *Template) RenderString(params EvaluatorParams) (string, error) {
+	var sb strings.Builder
+	if err := tpl.Render(params, func(str string) {
+		sb.WriteString(str)
+	}); err != nil {
+		return "", err
+	}
+	return sb.String(), nil
+}
+
+func (tpl *Template) Render(params EvaluatorParams, writerFunc func(string)) error {
 	tagStack := stackgo.NewStack()
 	pushNode := func(node *Node) error {
 		node, err := node.ApplyExtensions(&tpl.extDeps, params)
@@ -50,12 +69,12 @@ func (tpl *Template) Render(params EvaluatorParams) ([]byte, error) {
 	for _, rootNode := range tpl.rootNodes {
 		err := pushNode(rootNode)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		for tagStack.Top() != nil {
 			switch tag := tagStack.Pop().(type) {
 			case tplStartTag:
-				bb.WriteString(tag.tag)
+				writerFunc(tag.tag)
 
 				var children []*Node
 				tag.node.Children(func(_ int, child *Node) bool {
@@ -65,16 +84,16 @@ func (tpl *Template) Render(params EvaluatorParams) ([]byte, error) {
 				for i := len(children) - 1; i >= 0; i-- {
 					err := pushNode(children[i])
 					if err != nil {
-						return nil, err
+						return err
 					}
 				}
 			case tplEndTag:
-				bb.WriteString(tag.tag)
+				writerFunc(tag.tag)
 			}
 		}
 	}
 
-	return bb.Bytes(), nil
+	return nil
 }
 
 type tplStartTag struct {
