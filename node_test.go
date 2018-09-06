@@ -86,6 +86,42 @@ func TestCreateNode(t *testing.T) {
 	}
 }
 
+func TestCopyNode(t *testing.T) {
+	divNode := tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
+		html.Attribute{Key: "class", Val: "animals"},
+		html.Attribute{Key: "go-if", Val: "hasAnimals"},
+	}, false)
+	divNodeCopy := tplinator.CopyNode(divNode)
+
+	if divNode.Data != divNodeCopy.Data || divNode.Type != divNodeCopy.Type ||
+		len(divNode.Attributes()) != len(divNodeCopy.Attributes()) {
+		t.Error("original node and its copy does not match")
+		return
+	}
+
+	dnst, dnet := divNode.Tags()
+	dncst, dncet := divNodeCopy.Tags()
+	if dnst != dncst || dnet != dncet {
+		t.Error("original node and its copy does not match")
+	}
+}
+
+func TestNode_ContextParams(t *testing.T) {
+	params := tplinator.EvaluatorParams{
+		"a": "cat",
+		"b": "sea",
+	}
+
+	divNode := tplinator.CreateNode(html.ElementNode, "div", nil, false)
+	divNode.SetContextParams(params)
+
+	for k, v := range divNode.ContextParams() {
+		if params[k] != v {
+			t.Error("assertion error. was not properly assigned")
+		}
+	}
+}
+
 func TestNode_Parent(t *testing.T) {
 	divNode := tplinator.CreateNode(html.ElementNode, "div", nil, false)
 	formNode := tplinator.CreateNode(html.ElementNode, "form", nil, false)
