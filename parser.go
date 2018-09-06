@@ -40,9 +40,6 @@ func (p Parser) parse() ([]*Node, error) {
 	templateNodes := make([]*Node, 0)
 
 	postProcessThenAddNode := func(newNode *Node) {
-		for _, processNode := range p.nodeProcessors {
-			processNode(newNode)
-		}
 		if top := parserStack.Top(); top != nil {
 			top.(*Node).AppendChild(newNode)
 		} else {
@@ -62,6 +59,7 @@ func (p Parser) parse() ([]*Node, error) {
 					"parser: reached the end of the file unexpectedly",
 				)
 			}
+			p.processNodes(templateNodes)
 			return templateNodes, nil
 		}
 
@@ -133,6 +131,24 @@ func (p Parser) parse() ([]*Node, error) {
 			}
 		default:
 			return templateNodes, errors.New("parser: unknown token type")
+		}
+	}
+}
+
+func (p Parser) processNodes(rootNodes []*Node) {
+	nodeStack := stackgo.NewStack()
+	for _, rootNode := range rootNodes {
+		nodeStack.Push(rootNode)
+
+		for nodeStack.Top() != nil {
+			node := nodeStack.Pop().(*Node)
+			for _, processNode := range p.nodeProcessors {
+				processNode(node)
+			}
+			node.Children(func(_ int, child *Node) bool {
+				nodeStack.Push(child)
+				return true
+			})
 		}
 	}
 }
