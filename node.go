@@ -139,6 +139,16 @@ func (n Node) HasAttribute(key string) (bool, int, string) {
 	return false, -1, ""
 }
 
+func (n Node) HasAttributes(testFunc func(Attribute) bool) []Attribute {
+	var matches []Attribute
+	for _, attr := range n.attributes {
+		if testFunc(attr) {
+			matches = append(matches, attr)
+		}
+	}
+	return matches
+}
+
 func (n *Node) AddAttribute(key, value string) {
 	if attrAlreadyExists, _, _ := n.HasAttribute(key); attrAlreadyExists {
 		n.ReplaceAttribute(key, value)

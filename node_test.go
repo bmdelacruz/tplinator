@@ -1,6 +1,8 @@
 package tplinator_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/bmdelacruz/tplinator"
@@ -342,6 +344,56 @@ func TestNode_HasAttribute(t *testing.T) {
 					hasAttribute, attributeIndex, attributeValue, tc)
 			}
 		})
+	}
+}
+
+func TestNode_HasAttributes(t *testing.T) {
+	testCases := []struct {
+		name string
+
+		// arguments
+		nodeMaker func() *tplinator.Node
+		testFunc  func(tplinator.Attribute) bool
+
+		// expected values
+		checkerFunc func([]tplinator.Attribute) error
+	}{
+		{
+			name: "present attributes",
+
+			nodeMaker: func() *tplinator.Node {
+				return tplinator.CreateNode(html.ElementNode, "img", []html.Attribute{
+					html.Attribute{Key: "id", Val: "#animal002"},
+					html.Attribute{Key: "src", Val: "/static/images/cat.png"},
+					html.Attribute{Key: "go-if", Val: "hasImage"},
+					html.Attribute{Key: "go-if-class-cat", Val: "isCat"},
+				}, true)
+			},
+			testFunc: func(attr tplinator.Attribute) bool {
+				return attr.Key == "src" || attr.Key == "go-if" ||
+					strings.HasPrefix(attr.Key, "go-if-class-")
+			},
+
+			checkerFunc: func(attrs []tplinator.Attribute) error {
+				if len(attrs) != 3 {
+					return fmt.Errorf("expecting 3 matching attributes")
+				} else if attrs[0].Key != "src" {
+					return fmt.Errorf("expecting `src` as 1st matching attribute")
+				} else if attrs[1].Key != "go-if" {
+					return fmt.Errorf("expecting `go-if` as 2nd matching attribute")
+				} else if attrs[2].Key != "go-if-class-cat" {
+					return fmt.Errorf("expecting `go-if-class-cat` as 3rd matching attribute")
+				}
+				return nil
+			},
+		},
+	}
+
+	tc := testCases[0]
+	matches := tc.nodeMaker().HasAttributes(tc.testFunc)
+	err := tc.checkerFunc(matches)
+	if err != nil {
+		t.Error(err, matches)
 	}
 }
 
