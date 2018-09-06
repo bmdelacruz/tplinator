@@ -18,14 +18,14 @@ func TestNodeExtension_Conditional(t *testing.T) {
 	tplinator.ConditionalExtensionNodeProcessor(h1Node)
 
 	params["shouldRender"] = true
-	finalH1Node, err := h1Node.ApplyExtensions(extdep, params)
+	finalH1Node, _, err := h1Node.ApplyExtensions(extdep, params)
 	if err != nil {
 		t.Errorf("encountered an unexpected error")
 	} else if finalH1Node == nil {
 		t.Errorf("shouldRender is true but finalH1Node is nil")
 	}
 	params["shouldRender"] = false
-	finalH1Node, err = h1Node.ApplyExtensions(extdep, params)
+	finalH1Node, _, err = h1Node.ApplyExtensions(extdep, params)
 	if err != nil {
 		t.Errorf("encountered an unexpected error")
 	} else if finalH1Node != nil {
@@ -56,7 +56,7 @@ func TestNodeExtension_Conditional(t *testing.T) {
 	params["hasOne"] = false
 	params["hasTwo"] = true
 	params["hasThree"] = false
-	finalH1Node, err = h1Node.ApplyExtensions(extdep, params)
+	finalH1Node, _, err = h1Node.ApplyExtensions(extdep, params)
 	if err != nil {
 		t.Errorf("encountered an unexpected error")
 	} else if finalH1Node != h2Node {
@@ -65,7 +65,7 @@ func TestNodeExtension_Conditional(t *testing.T) {
 	params["hasOne"] = false
 	params["hasTwo"] = false
 	params["hasThree"] = true
-	finalH1Node, err = h1Node.ApplyExtensions(extdep, params)
+	finalH1Node, _, err = h1Node.ApplyExtensions(extdep, params)
 	if err != nil {
 		t.Errorf("encountered an unexpected error")
 	} else if finalH1Node != h3Node {
@@ -74,7 +74,7 @@ func TestNodeExtension_Conditional(t *testing.T) {
 	params["hasOne"] = false
 	params["hasTwo"] = false
 	params["hasThree"] = false
-	finalH1Node, err = h1Node.ApplyExtensions(extdep, params)
+	finalH1Node, _, err = h1Node.ApplyExtensions(extdep, params)
 	if err != nil {
 		t.Errorf("encountered an unexpected error")
 	} else if finalH1Node != h4Node {
@@ -93,7 +93,7 @@ func TestNodeExtension_Conditional(t *testing.T) {
 	tplinator.ConditionalExtensionNodeProcessor(h1Node)
 
 	params["hasOne"] = false
-	finalH1Node, err = h1Node.ApplyExtensions(extdep, params)
+	finalH1Node, _, err = h1Node.ApplyExtensions(extdep, params)
 	if err != nil {
 		t.Errorf("encountered an unexpected error")
 	} else if finalH1Node != nil {
@@ -111,7 +111,7 @@ func TestNodeExtension_ConditionalClass(t *testing.T) {
 	tplinator.ConditionalClassExtensionNodeProcessor(divNode)
 
 	params["isAnAnimal"] = true
-	finalDivNode, err := divNode.ApplyExtensions(extdep, params)
+	finalDivNode, _, err := divNode.ApplyExtensions(extdep, params)
 	if err != nil {
 		t.Errorf("encountered an unexpected error")
 	} else if finalDivNode == nil {
@@ -126,7 +126,7 @@ func TestNodeExtension_ConditionalClass(t *testing.T) {
 	}
 
 	params["isAnAnimal"] = false
-	finalDivNode, err = divNode.ApplyExtensions(extdep, params)
+	finalDivNode, _, err = divNode.ApplyExtensions(extdep, params)
 	if err != nil {
 		t.Errorf("encountered an unexpected error")
 	} else if finalDivNode == nil {
@@ -145,7 +145,7 @@ func TestNodeExtension_ConditionalClass(t *testing.T) {
 	tplinator.ConditionalClassExtensionNodeProcessor(divNode)
 
 	params["isAnAnimal"] = true
-	finalDivNode, err = divNode.ApplyExtensions(extdep, params)
+	finalDivNode, _, err = divNode.ApplyExtensions(extdep, params)
 	if err != nil {
 		t.Errorf("encountered an unexpected error")
 	} else if finalDivNode == nil {
@@ -160,7 +160,7 @@ func TestNodeExtension_ConditionalClass(t *testing.T) {
 	}
 
 	params["isAnAnimal"] = false
-	finalDivNode, err = divNode.ApplyExtensions(extdep, params)
+	finalDivNode, _, err = divNode.ApplyExtensions(extdep, params)
 	if err != nil {
 		t.Errorf("encountered an unexpected error")
 	} else if finalDivNode == nil {
