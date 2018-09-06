@@ -11,12 +11,6 @@ import (
 
 type ParserOptionFunc func(*Parser)
 
-func StrictnessParserOption(isStrict bool) ParserOptionFunc {
-	return func(p *Parser) {
-		p.isStrict = isStrict
-	}
-}
-
 type NodeProcessorFunc func(*Node)
 
 func NodeProcessorsParserOption(npfs ...NodeProcessorFunc) ParserOptionFunc {
@@ -29,8 +23,6 @@ type Parser struct {
 	tokenizer *html.Tokenizer
 
 	nodeProcessors []NodeProcessorFunc
-
-	isStrict bool // TODO: use strictness value
 }
 
 func ParseNodes(rdr io.Reader, opts ...ParserOptionFunc) ([]*Node, error) {
