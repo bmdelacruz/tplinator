@@ -100,3 +100,77 @@ func TestNodeExtension_Conditional(t *testing.T) {
 		t.Errorf("finalH1Node should be nil")
 	}
 }
+
+func TestNodeExtension_ConditionalClass(t *testing.T) {
+	extdep := tplinator.NewDefaultExtensionDependencies()
+	params := make(map[string]interface{})
+
+	divNode := tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
+		html.Attribute{Key: "go-if-class-animal", Val: "isAnAnimal"},
+	}, false)
+	tplinator.ConditionalClassExtensionNodeProcessor(divNode)
+
+	params["isAnAnimal"] = true
+	finalDivNode, err := divNode.ApplyExtensions(extdep, params)
+	if err != nil {
+		t.Errorf("encountered an unexpected error")
+	} else if finalDivNode == nil {
+		t.Errorf("finalDivNode should not be nil")
+	} else {
+		hasClass, _, classVal := finalDivNode.HasAttribute("class")
+		if !hasClass {
+			t.Errorf("finalDivNode should have a class attribute")
+		} else if classVal != "animal" {
+			t.Errorf("finalDivNode's class attribute must have `animal` as its value")
+		}
+	}
+
+	params["isAnAnimal"] = false
+	finalDivNode, err = divNode.ApplyExtensions(extdep, params)
+	if err != nil {
+		t.Errorf("encountered an unexpected error")
+	} else if finalDivNode == nil {
+		t.Errorf("finalDivNode should not be nil")
+	} else {
+		hasClass, _, _ := finalDivNode.HasAttribute("class")
+		if hasClass {
+			t.Errorf("finalDivNode should not have a class attribute")
+		}
+	}
+
+	divNode = tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
+		html.Attribute{Key: "class", Val: "photo-entry"},
+		html.Attribute{Key: "go-if-class-animal", Val: "isAnAnimal"},
+	}, false)
+	tplinator.ConditionalClassExtensionNodeProcessor(divNode)
+
+	params["isAnAnimal"] = true
+	finalDivNode, err = divNode.ApplyExtensions(extdep, params)
+	if err != nil {
+		t.Errorf("encountered an unexpected error")
+	} else if finalDivNode == nil {
+		t.Errorf("finalDivNode should not be nil")
+	} else {
+		hasClass, _, classVal := finalDivNode.HasAttribute("class")
+		if !hasClass {
+			t.Errorf("finalDivNode should have a class attribute")
+		} else if classVal != "photo-entry animal" {
+			t.Errorf("finalDivNode's class attribute must have `photo-entry animal` as its value")
+		}
+	}
+
+	params["isAnAnimal"] = false
+	finalDivNode, err = divNode.ApplyExtensions(extdep, params)
+	if err != nil {
+		t.Errorf("encountered an unexpected error")
+	} else if finalDivNode == nil {
+		t.Errorf("finalDivNode should not be nil")
+	} else {
+		hasClass, _, classVal := finalDivNode.HasAttribute("class")
+		if !hasClass {
+			t.Errorf("finalDivNode should have a class attribute")
+		} else if classVal != "photo-entry" {
+			t.Errorf("finalDivNode's class attribute must have `photo-entry` as its value")
+		}
+	}
+}

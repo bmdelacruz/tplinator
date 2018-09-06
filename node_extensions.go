@@ -1,5 +1,9 @@
 package tplinator
 
+import (
+	"strings"
+)
+
 type Extension interface {
 	Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, error)
 }
@@ -75,8 +79,66 @@ func ConditionalExtensionNodeProcessor(node *Node) {
 	}
 }
 
+type conditionalClassExtensionCondition struct {
+	className             string
+	conditionalExpression string
+}
+
+type ConditionalClassExtension struct {
+	originalClasses    []string
+	conditionalClasses []conditionalClassExtensionCondition
+}
+
+func (ce *ConditionalClassExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, error) {
+	var appliedClasses []string
+	copyNode := *node
+
+	appliedClasses = append(appliedClasses, ce.originalClasses...)
+	for _, conditionalClass := range ce.conditionalClasses {
+		evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
+		result, err := evaluator.EvaluateBool(conditionalClass.conditionalExpression, params)
+		if err != nil {
+			return nil, err
+		} else if result {
+			appliedClasses = append(appliedClasses, conditionalClass.className)
+		}
+	}
+	if len(appliedClasses) > 0 {
+		copyNode.AddAttribute("class", strings.Join(appliedClasses, " "))
+	}
+	return &copyNode, nil
+}
+
 func ConditionalClassExtensionNodeProcessor(node *Node) {
-	// TODO
+	ifClassAttrs := node.HasAttributes(func(attr Attribute) bool {
+		return strings.HasPrefix(attr.Key, "go-if-class-")
+	})
+	if len(ifClassAttrs) > 0 {
+		conditionalClassExtension := &ConditionalClassExtension{}
+
+		hasClass, _, class := node.HasAttribute("class")
+		if hasClass && class != "" {
+			conditionalClassExtension.originalClasses = strings.Fields(class)
+			node.RemoveAttribute("class")
+		}
+
+		for _, ifClassAttr := range ifClassAttrs {
+			className := strings.TrimPrefix(ifClassAttr.Key, "go-if-class-")
+			className = strings.TrimSpace(className)
+			if className != "" {
+				conditionalClassExtension.conditionalClasses = append(
+					conditionalClassExtension.conditionalClasses,
+					conditionalClassExtensionCondition{
+						className:             className,
+						conditionalExpression: ifClassAttr.Value,
+					},
+				)
+				node.RemoveAttribute(ifClassAttr.Key)
+			}
+		}
+
+		node.AddExtension(conditionalClassExtension)
+	}
 }
 
 func RangeExtensionNodeProcessor(node *Node) {
