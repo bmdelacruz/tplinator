@@ -64,16 +64,11 @@ func (tpl *Template) Render(params EvaluatorParams, writerFunc func(string)) err
 		node, sibs, err := node.ApplyExtensions(&tpl.extDeps, params)
 		if err != nil {
 			return err
-		} else if node != nil {
-			for i := len(sibs) - 1; i >= 0; i-- {
-				// ignore siblings of the new siblings. they're stupid
-				node, _, err := node.ApplyExtensions(&tpl.extDeps, params)
-				if err != nil {
-					return err
-				} else if node != nil {
-					pushNode(node)
-				}
-			}
+		}
+		for i := len(sibs) - 1; i >= 0; i-- {
+			pushNode(sibs[i])
+		}
+		if node != nil {
 			pushNode(node)
 		}
 		return nil
