@@ -145,8 +145,64 @@ func ConditionalClassExtensionNodeProcessor(node *Node) {
 	}
 }
 
+type RangeExtension struct {
+	contextVarName string
+	sourceVarName  string
+
+	isApplyingOnNewNodes bool
+}
+
+func (re *RangeExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
+	if re.isApplyingOnNewNodes {
+		return nil, nil, nil
+	}
+
+	evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
+	result, err := evaluator.Evaluate(re.sourceVarName, params)
+	if err != nil {
+		return nil, nil, err
+	}
+	rangeEvalParams, isRangeEvalParam := result.(RangeEvaluatorParams)
+	if !isRangeEvalParam {
+		return nil, nil, fmt.Errorf("the type of `%s` is not RangeEvaluatorParams", re.sourceVarName)
+	}
+
+	re.isApplyingOnNewNodes = true
+
+	var newNodes []*Node
+	for _, rangeEvalParam := range rangeEvalParams {
+		nodeCopy := CopyNode(node)
+		nodeCopy.SetContextParams(rangeEvalParam)
+		nodeCopy.ApplyExtensions(dependencies, params)
+		if err != nil {
+			return nil, nil, err
+		}
+		newNodes = append(newNodes, nodeCopy)
+	}
+
+	re.isApplyingOnNewNodes = false
+
+	return nil, newNodes, nil
+}
+
+type RangeEvaluatorParams []EvaluatorParams
+
+func RangeParams(params ...EvaluatorParams) RangeEvaluatorParams {
+	return params
+}
+
 func RangeExtensionNodeProcessor(node *Node) {
-	// TODO
+	if hasRange, _, rangeDeclaration := node.HasAttribute("go-range"); hasRange {
+		rangeDeclTokens := strings.Fields(rangeDeclaration)
+		if len(rangeDeclTokens) == 3 && rangeDeclTokens[1] == "in" {
+			rangeExtension := &RangeExtension{
+				contextVarName: rangeDeclTokens[0],
+				sourceVarName:  rangeDeclTokens[2],
+			}
+			node.AddExtension(rangeExtension)
+		}
+		node.RemoveAttribute("go-range")
+	}
 }
 
 var stringInterpolationMarkerRegex = regexp.MustCompile("{{go:[a-zA-Z]+[a-zA-Z\\d\\.]+[a-zA-Z\\d]+}}")
