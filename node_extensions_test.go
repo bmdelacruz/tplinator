@@ -180,7 +180,7 @@ func TestNodeExtension_Range(t *testing.T) {
 	params := make(map[string]interface{})
 
 	divNode := tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
-		html.Attribute{Key: "go-range", Val: "pet in pets"},
+		html.Attribute{Key: "go-range", Val: "pets"},
 	}, false)
 	tplinator.RangeExtensionNodeProcessor(divNode)
 

@@ -146,8 +146,7 @@ func ConditionalClassExtensionNodeProcessor(node *Node) {
 }
 
 type RangeExtension struct {
-	contextVarName string
-	sourceVarName  string
+	sourceVarName string
 
 	isApplyingOnNewNodes bool
 }
@@ -193,14 +192,10 @@ func RangeParams(params ...EvaluatorParams) RangeEvaluatorParams {
 
 func RangeExtensionNodeProcessor(node *Node) {
 	if hasRange, _, rangeDeclaration := node.HasAttribute("go-range"); hasRange {
-		rangeDeclTokens := strings.Fields(rangeDeclaration)
-		if len(rangeDeclTokens) == 3 && rangeDeclTokens[1] == "in" {
-			rangeExtension := &RangeExtension{
-				contextVarName: rangeDeclTokens[0],
-				sourceVarName:  rangeDeclTokens[2],
-			}
-			node.AddExtension(rangeExtension)
+		rangeExtension := &RangeExtension{
+			sourceVarName: rangeDeclaration,
 		}
+		node.AddExtension(rangeExtension)
 		node.RemoveAttribute("go-range")
 	}
 }
