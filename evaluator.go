@@ -14,6 +14,21 @@ type Evaluator interface {
 	Evaluate(input string, params EvaluatorParams) (interface{}, error)
 }
 
+func TryEvaluateStringOnContext(ctxNode *Node, evaluator Evaluator, inputStr string) (bool, string, error) {
+	var result string
+	var err error
+
+	hasResult := false
+	for !hasResult && ctxNode != nil {
+		if ctxParams := ctxNode.ContextParams(); ctxParams != nil {
+			result, err = evaluator.EvaluateString(inputStr, ctxNode.ContextParams())
+			hasResult = err == nil && result != ""
+		}
+		ctxNode = ctxNode.Parent()
+	}
+	return hasResult, result, err
+}
+
 type govaluator struct {
 }
 

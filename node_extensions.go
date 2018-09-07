@@ -1,7 +1,11 @@
 package tplinator
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
+
+	"golang.org/x/net/html"
 )
 
 type Extension interface {
@@ -143,4 +147,110 @@ func ConditionalClassExtensionNodeProcessor(node *Node) {
 
 func RangeExtensionNodeProcessor(node *Node) {
 	// TODO
+}
+
+var stringInterpolationMarkerRegex = regexp.MustCompile("{{go:[a-zA-Z]+[a-zA-Z\\d\\.]+[a-zA-Z\\d]+}}")
+
+type strInterpMarker struct {
+	marker string
+	key    string
+}
+
+type attrStrInterpMarkers struct {
+	attributeKey string
+	markers      []strInterpMarker
+}
+
+type AttrStringInterpExtension struct {
+	markers []attrStrInterpMarkers
+}
+
+func (asie AttrStringInterpExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
+	evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
+	nodeCopy := CopyNode(node)
+
+	for _, marker := range asie.markers {
+		hasAttr, _, attrVal := nodeCopy.HasAttribute(marker.attributeKey)
+		if !hasAttr {
+			return nil, nil, fmt.Errorf("attr string interp ext: assertion error. cannot find attr `%v`", marker.attributeKey)
+		}
+		for _, marker := range marker.markers {
+			hasResult, result, err := TryEvaluateStringOnContext(node, evaluator, marker.key)
+			if !hasResult {
+				result, err = evaluator.EvaluateString(marker.key, params)
+			}
+			if err != nil {
+				return nil, nil, fmt.Errorf("attr string interp ext: %v", err)
+			}
+			attrVal = strings.Replace(attrVal, marker.marker, result, 1)
+		}
+		nodeCopy.ReplaceAttribute(marker.attributeKey, attrVal)
+	}
+
+	return nodeCopy, nil, nil
+}
+
+type TextStringInterpExtension struct {
+	markers []strInterpMarker
+}
+
+func (tsie TextStringInterpExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
+	evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
+	nodeCopy := CopyNode(node)
+
+	for _, marker := range tsie.markers {
+		hasResult, result, err := TryEvaluateStringOnContext(node, evaluator, marker.key)
+		if !hasResult {
+			result, err = evaluator.EvaluateString(marker.key, params)
+		}
+		if err != nil {
+			return nil, nil, fmt.Errorf("text string interp ext: %v", err)
+		}
+		nodeCopy.Data = strings.Replace(nodeCopy.Data, marker.marker, result, 1)
+	}
+
+	return nodeCopy, nil, nil
+}
+
+func StringInterpolationNodeProcessor(node *Node) {
+	switch node.Type {
+	case html.ElementNode:
+		var attrMarkers []attrStrInterpMarkers
+		for _, attr := range node.Attributes() {
+			matches := stringInterpolationMarkerRegex.FindAllString(attr.Value, -1)
+			if len(matches) > 0 {
+				attrMarker := attrStrInterpMarkers{
+					attributeKey: attr.Key,
+				}
+				for _, marker := range matches {
+					key := strings.TrimPrefix(marker, "{{go:")
+					key = strings.TrimSuffix(key, "}}")
+					attrMarker.markers = append(attrMarker.markers, strInterpMarker{
+						marker: marker,
+						key:    key,
+					})
+				}
+				attrMarkers = append(attrMarkers, attrMarker)
+			}
+		}
+		if len(attrMarkers) > 0 {
+			node.AddExtension(&AttrStringInterpExtension{
+				markers: attrMarkers,
+			})
+		}
+	case html.TextNode:
+		matches := stringInterpolationMarkerRegex.FindAllString(node.Data, -1)
+		if len(matches) > 0 {
+			tsiExt := &TextStringInterpExtension{}
+			for _, marker := range matches {
+				key := strings.TrimPrefix(marker, "{{go:")
+				key = strings.TrimSuffix(key, "}}")
+				tsiExt.markers = append(tsiExt.markers, strInterpMarker{
+					marker: marker,
+					key:    key,
+				})
+			}
+			node.AddExtension(tsiExt)
+		}
+	}
 }

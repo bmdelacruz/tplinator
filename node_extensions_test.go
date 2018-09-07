@@ -174,3 +174,82 @@ func TestNodeExtension_ConditionalClass(t *testing.T) {
 		}
 	}
 }
+
+func TestNodeExtension_StringInterpolation(t *testing.T) {
+	extdep := tplinator.NewDefaultExtensionDependencies()
+	params := make(map[string]interface{})
+
+	textNode := tplinator.CreateNode(html.TextNode, "{{go:description}}", nil, false)
+	tplinator.StringInterpolationNodeProcessor(textNode)
+
+	params["description"] = "Lorem ipsum dolor sit amet"
+	newTextNode, _, err := textNode.ApplyExtensions(extdep, params)
+	if err != nil {
+		t.Errorf("encountered an unexpected error")
+	} else if newTextNode == nil {
+		t.Errorf("newTextNode should not be nil")
+	} else if newTextNode.Data != "Lorem ipsum dolor sit amet" {
+		t.Errorf("wanted `Lorem ipsum dolor sit amet`, got `%v`", newTextNode.Data)
+	}
+
+	h1Node := tplinator.CreateNode(html.ElementNode, "h1", nil, false)
+	h1Node.SetContextParams(tplinator.EvaluatorParams{
+		"description": "The big brown fox",
+	})
+	textNode = tplinator.CreateNode(html.TextNode, "{{go:description}}", nil, false)
+	h1Node.AppendChild(textNode)
+
+	tplinator.StringInterpolationNodeProcessor(h1Node)
+	tplinator.StringInterpolationNodeProcessor(textNode)
+
+	params["description"] = "Lorem ipsum dolor sit amet"
+	newTextNode, _, err = textNode.ApplyExtensions(extdep, params)
+	if err != nil {
+		t.Errorf("encountered an unexpected error")
+	} else if newTextNode == nil {
+		t.Errorf("newTextNode should not be nil")
+	} else if newTextNode.Data != "The big brown fox" {
+		t.Errorf("wanted `The big brown fox`, got `%v`", newTextNode.Data)
+	}
+
+	aNode := tplinator.CreateNode(html.ElementNode, "h1", []html.Attribute{
+		html.Attribute{Key: "href", Val: "/users/{{go:uid}}"},
+	}, false)
+	tplinator.StringInterpolationNodeProcessor(aNode)
+
+	params["uid"] = "10000284736283"
+	newANode, _, err := aNode.ApplyExtensions(extdep, params)
+	if err != nil {
+		t.Errorf("encountered an unexpected error")
+	} else if newANode == nil {
+		t.Errorf("newANode should not be nil")
+	} else if hasHref, _, hrefVal := newANode.HasAttribute("href"); hasHref {
+		if hrefVal != "/users/10000284736283" {
+			t.Errorf("wanted `/users/10000284736283`, got `%v`", hrefVal)
+		}
+	} else {
+		t.Errorf("newANode should have an href attribute")
+	}
+
+	aNode = tplinator.CreateNode(html.ElementNode, "h1", []html.Attribute{
+		html.Attribute{Key: "href", Val: "/users/{{go:uid}}"},
+	}, false)
+	aNode.SetContextParams(tplinator.EvaluatorParams{
+		"uid": "41728897352322",
+	})
+	tplinator.StringInterpolationNodeProcessor(aNode)
+
+	params["uid"] = "10000284736283"
+	newANode, _, err = aNode.ApplyExtensions(extdep, params)
+	if err != nil {
+		t.Errorf("encountered an unexpected error")
+	} else if newANode == nil {
+		t.Errorf("newANode should not be nil")
+	} else if hasHref, _, hrefVal := newANode.HasAttribute("href"); hasHref {
+		if hrefVal != "/users/41728897352322" {
+			t.Errorf("wanted `/users/41728897352322`, got `%v`", hrefVal)
+		}
+	} else {
+		t.Errorf("newANode should have an href attribute")
+	}
+}
