@@ -48,6 +48,15 @@ func (tpl *Template) RenderString(params EvaluatorParams) (string, error) {
 }
 
 func (tpl *Template) Render(params EvaluatorParams, writerFunc func(string)) error {
+	type tplStartTag struct {
+		node *Node
+		tag  string
+	}
+
+	type tplEndTag struct {
+		tag string
+	}
+
 	tagStack := stackgo.NewStack()
 
 	pushNode := func(node *Node) {
@@ -102,13 +111,4 @@ func (tpl *Template) Render(params EvaluatorParams, writerFunc func(string)) err
 	}
 
 	return nil
-}
-
-type tplStartTag struct {
-	node *Node
-	tag  string
-}
-
-type tplEndTag struct {
-	tag string
 }
