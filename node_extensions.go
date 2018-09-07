@@ -25,7 +25,12 @@ type ConditionalExtension struct {
 func (ce *ConditionalExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
 	for _, condition := range ce.conditions {
 		evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
-		result, err := evaluator.EvaluateBool(condition.conditionalExpression, params)
+		hasResult, result, err := TryEvaluateBoolOnContext(
+			node, evaluator, condition.conditionalExpression,
+		)
+		if !hasResult {
+			result, err = evaluator.EvaluateBool(condition.conditionalExpression, params)
+		}
 		if err != nil {
 			return nil, nil, err
 		} else if result {
@@ -95,12 +100,17 @@ type ConditionalClassExtension struct {
 
 func (ce *ConditionalClassExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
 	var appliedClasses []string
-	copyNode := *node
+	copyNode := CopyNode(node)
 
 	appliedClasses = append(appliedClasses, ce.originalClasses...)
 	for _, conditionalClass := range ce.conditionalClasses {
 		evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
-		result, err := evaluator.EvaluateBool(conditionalClass.conditionalExpression, params)
+		hasResult, result, err := TryEvaluateBoolOnContext(
+			node, evaluator, conditionalClass.conditionalExpression,
+		)
+		if !hasResult {
+			result, err = evaluator.EvaluateBool(conditionalClass.conditionalExpression, params)
+		}
 		if err != nil {
 			return nil, nil, err
 		} else if result {
@@ -110,7 +120,7 @@ func (ce *ConditionalClassExtension) Apply(node *Node, dependencies ExtensionDep
 	if len(appliedClasses) > 0 {
 		copyNode.AddAttribute("class", strings.Join(appliedClasses, " "))
 	}
-	return &copyNode, nil, nil
+	return copyNode, nil, nil
 }
 
 func ConditionalClassExtensionNodeProcessor(node *Node) {
@@ -153,11 +163,14 @@ type RangeExtension struct {
 
 func (re *RangeExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
 	if re.isApplyingOnNewNodes {
-		return nil, nil, nil
+		return node, nil, nil
 	}
 
 	evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
-	result, err := evaluator.Evaluate(re.sourceVarName, params)
+	hasResult, result, err := TryEvaluateOnContext(node, evaluator, re.sourceVarName)
+	if !hasResult {
+		result, err = evaluator.Evaluate(re.sourceVarName, params)
+	}
 	if err != nil {
 		return nil, nil, err
 	}
@@ -172,11 +185,14 @@ func (re *RangeExtension) Apply(node *Node, dependencies ExtensionDependencies, 
 	for _, rangeEvalParam := range rangeEvalParams {
 		nodeCopy := CopyNode(node)
 		nodeCopy.SetContextParams(rangeEvalParam)
-		nodeCopy.ApplyExtensions(dependencies, params)
+
+		// ignore new siblings produced by this Node#ApplyExtensions func call
+		newNodeCopy, _, err := nodeCopy.ApplyExtensions(dependencies, params)
 		if err != nil {
 			return nil, nil, err
+		} else if newNodeCopy != nil {
+			newNodes = append(newNodes, newNodeCopy)
 		}
-		newNodes = append(newNodes, nodeCopy)
 	}
 
 	re.isApplyingOnNewNodes = false
@@ -200,7 +216,7 @@ func RangeExtensionNodeProcessor(node *Node) {
 	}
 }
 
-var stringInterpolationMarkerRegex = regexp.MustCompile("{{go:[a-zA-Z]+[a-zA-Z\\d\\.]+[a-zA-Z\\d]+}}")
+var stringInterpolationMarkerRegex = regexp.MustCompile("{{go:[a-zA-Z]+[a-zA-Z\\d\\.]*[a-zA-Z\\d]*}}")
 
 type strInterpMarker struct {
 	marker string
@@ -218,10 +234,9 @@ type AttrStringInterpExtension struct {
 
 func (asie AttrStringInterpExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
 	evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
-	nodeCopy := CopyNode(node)
 
 	for _, marker := range asie.markers {
-		hasAttr, _, attrVal := nodeCopy.HasAttribute(marker.attributeKey)
+		hasAttr, _, attrVal := node.HasAttribute(marker.attributeKey)
 		if !hasAttr {
 			return nil, nil, fmt.Errorf("attr string interp ext: assertion error. cannot find attr `%v`", marker.attributeKey)
 		}
@@ -235,10 +250,10 @@ func (asie AttrStringInterpExtension) Apply(node *Node, dependencies ExtensionDe
 			}
 			attrVal = strings.Replace(attrVal, marker.marker, result, 1)
 		}
-		nodeCopy.ReplaceAttribute(marker.attributeKey, attrVal)
+		node.ReplaceAttribute(marker.attributeKey, attrVal)
 	}
 
-	return nodeCopy, nil, nil
+	return node, nil, nil
 }
 
 type TextStringInterpExtension struct {
@@ -247,7 +262,6 @@ type TextStringInterpExtension struct {
 
 func (tsie TextStringInterpExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
 	evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
-	nodeCopy := CopyNode(node)
 
 	for _, marker := range tsie.markers {
 		hasResult, result, err := TryEvaluateStringOnContext(node, evaluator, marker.key)
@@ -257,10 +271,10 @@ func (tsie TextStringInterpExtension) Apply(node *Node, dependencies ExtensionDe
 		if err != nil {
 			return nil, nil, fmt.Errorf("text string interp ext: %v", err)
 		}
-		nodeCopy.Data = strings.Replace(nodeCopy.Data, marker.marker, result, 1)
+		node.Data = strings.Replace(node.Data, marker.marker, result, 1)
 	}
 
-	return nodeCopy, nil, nil
+	return node, nil, nil
 }
 
 func StringInterpolationNodeProcessor(node *Node) {

@@ -6,8 +6,8 @@ func Tplinate(tplReader io.Reader, parserOptions ...ParserOptionFunc) (*Template
 	defaultParserOptions := []ParserOptionFunc{
 		NodeProcessorsParserOption(
 			ConditionalExtensionNodeProcessor,
-			ConditionalClassExtensionNodeProcessor,
 			RangeExtensionNodeProcessor,
+			ConditionalClassExtensionNodeProcessor,
 			StringInterpolationNodeProcessor,
 		),
 	}

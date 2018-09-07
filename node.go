@@ -51,6 +51,7 @@ func CopyNode(node *Node) *Node {
 			Data:          n.Data,
 			Type:          n.Type,
 			isSelfClosing: n.isSelfClosing,
+			contextParams: n.contextParams,
 		}
 		for _, attr := range n.attributes {
 			nodeCopy.attributes = append(nodeCopy.attributes, attr)
@@ -196,18 +197,21 @@ func (n *Node) AddExtension(extension Extension) {
 }
 
 func (n *Node) ApplyExtensions(dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
-	var sibs, siblings []*Node
-	var err error
-
-	finalNode := n
+	siblings := make([]*Node, 0)
+	currentNode := n
 	for _, extension := range n.extensions {
-		finalNode, sibs, err = extension.Apply(finalNode, dependencies, params)
+		newNode, newSibs, err := extension.Apply(currentNode, dependencies, params)
 		if err != nil {
 			return nil, nil, err
+		} else if newNode != nil {
+			currentNode = newNode
+		} else {
+			currentNode = nil
+			siblings = append(siblings, newSibs...)
+			break
 		}
-		siblings = append(siblings, sibs...)
 	}
-	return finalNode, siblings, nil
+	return currentNode, siblings, nil
 }
 
 func (n Node) Attributes() []Attribute {
