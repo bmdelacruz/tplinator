@@ -14,6 +14,21 @@ type Evaluator interface {
 	Evaluate(input string, params EvaluatorParams) (interface{}, error)
 }
 
+func TryEvaluateBoolOnContext(ctxNode *Node, evaluator Evaluator, inputStr string) (bool, bool, error) {
+	var result bool
+	var err error
+
+	hasResult := false
+	for !hasResult && ctxNode != nil {
+		if ctxParams := ctxNode.ContextParams(); ctxParams != nil {
+			result, err = evaluator.EvaluateBool(inputStr, ctxParams)
+			hasResult = err == nil
+		}
+		ctxNode = ctxNode.Parent()
+	}
+	return hasResult, result, err
+}
+
 func TryEvaluateStringOnContext(ctxNode *Node, evaluator Evaluator, inputStr string) (bool, string, error) {
 	var result string
 	var err error
@@ -21,8 +36,23 @@ func TryEvaluateStringOnContext(ctxNode *Node, evaluator Evaluator, inputStr str
 	hasResult := false
 	for !hasResult && ctxNode != nil {
 		if ctxParams := ctxNode.ContextParams(); ctxParams != nil {
-			result, err = evaluator.EvaluateString(inputStr, ctxNode.ContextParams())
-			hasResult = err == nil && result != ""
+			result, err = evaluator.EvaluateString(inputStr, ctxParams)
+			hasResult = err == nil
+		}
+		ctxNode = ctxNode.Parent()
+	}
+	return hasResult, result, err
+}
+
+func TryEvaluateOnContext(ctxNode *Node, evaluator Evaluator, inputStr string) (bool, interface{}, error) {
+	var result interface{}
+	var err error
+
+	hasResult := false
+	for !hasResult && ctxNode != nil {
+		if ctxParams := ctxNode.ContextParams(); ctxParams != nil {
+			result, err = evaluator.Evaluate(inputStr, ctxParams)
+			hasResult = err == nil
 		}
 		ctxNode = ctxNode.Parent()
 	}

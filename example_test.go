@@ -14,7 +14,7 @@ func ExampleTplinate() {
 	<!doctype html>
 	<html>
 	<head>
-		<title></title>
+		<title>Hello, world!</title>
 	</head>
 	<body>
 		<form action="/test/{{go:uid}}" method="POST">
@@ -69,7 +69,7 @@ func ExampleTplinate() {
 	// <!DOCTYPE html>
 	// <html>
 	//   <head>
-	//     <title></title>
+	//     <title>Hello, world!</title>
 	//   </head>
 	//   <body>
 	//     <form action="/test/28473664853" method="POST">
@@ -93,4 +93,140 @@ func ExampleTplinate() {
 	//     </div>
 	//   </body>
 	// </html>
+}
+
+func ExampleConditionalRendering() {
+	sampleHtml := `
+	<div class="messages">
+		<p go-if="hasOne">Has one</p>
+		<p go-else-if="hasTwo && !hasThree">Has two but does not have three</p>
+		<p go-else-if="hasTwo && hasThree">Has two and three</p>
+		<p go-else>Does not have any</p>
+	</div>
+	`
+
+	template, err := tplinator.Tplinate(strings.NewReader(sampleHtml))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bytes, err := template.RenderBytes(map[string]interface{}{
+		"hasOne":   false,
+		"hasTwo":   true,
+		"hasThree": true,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gohtml.Condense = true
+	fmt.Printf("%s\n", gohtml.FormatBytes(bytes))
+
+	// Output:
+	// <div class="messages">
+	//   <p>Has two and three</p>
+	// </div>
+}
+
+func ExampleConditionalClasses() {
+	sampleHtml := `
+	<div class="menu-entry" go-if-class-food="isFood" go-if-class-drink="isDrink">
+		<h1>{{go:name}}</h1>
+		<p>{{go:description}}</p>
+	</div>
+	`
+
+	template, err := tplinator.Tplinate(strings.NewReader(sampleHtml))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bytes, err := template.RenderBytes(map[string]interface{}{
+		"isFood":      true,
+		"isDrink":     false,
+		"name":        "Blueberry Cheesecake",
+		"description": "A delicious treat from the realm of gods and goddesses.",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gohtml.Condense = true
+	fmt.Printf("%s\n", gohtml.FormatBytes(bytes))
+
+	// Output:
+	// <div class="menu-entry food">
+	//   <h1>Blueberry Cheesecake</h1>
+	//   <p>A delicious treat from the realm of gods and goddesses.</p>
+	// </div>
+}
+
+func ExampleListRendering() {
+	// FIXME
+	// since range elements are not attached to the dom tree,
+	// that element and its children will not be able to access
+	// context params of the elements outside their scope.
+
+	sampleHtml := `
+	<div class="menu">
+		<div class="menu-entry" go-range="menuEntries" go-if-class-food="isFood" go-if-class-drink="isDrink">
+			<h1>{{go:name}}</h1>
+			<p class="description">{{go:description}}</p>
+			<form action="/user/{{go:userId}}/favorite?what={{go:favoriteWhat}}&id={{go:id}}" method="POST">
+				<button type="submit">Add {{go:name}} to my favorites</button>
+			</form>
+		</div>
+	</div>
+	`
+
+	template, err := tplinator.Tplinate(strings.NewReader(sampleHtml))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bytes, err := template.RenderBytes(tplinator.EvaluatorParams{
+		"userId": "412897373847523",
+		"menuEntries": tplinator.RangeParams(
+			tplinator.EvaluatorParams{
+				"isFood":       true,
+				"isDrink":      false,
+				"id":           "399585827",
+				"favoriteWhat": "food",
+				"name":         "Blueberry Cheesecake",
+				"description":  "A delicious treat from the realm of gods and goddesses.",
+			},
+			tplinator.EvaluatorParams{
+				"isFood":       false,
+				"isDrink":      true,
+				"id":           "518273743",
+				"favoriteWhat": "drink",
+				"name":         "Iced Coffee",
+				"description":  "The tears of the trees that lives on the summit of the Alps.",
+			},
+		),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gohtml.Condense = true
+	fmt.Printf("%s\n", gohtml.FormatBytes(bytes))
+
+	// Output:
+	// <div class="menu">
+	//   <div class="menu-entry food">
+	//     <h1>Blueberry Cheesecake</h1>
+	//     <p class="description">A delicious treat from the realm of gods and goddesses.</p>
+	//     <form action="/user/412897373847523/favorite?what=food&id=399585827" method="POST">
+	//       <button type="submit">Add Blueberry Cheesecake to my favorites</button>
+	//     </form>
+	//   </div>
+	//   <div class="menu-entry drink">
+	//     <h1>Iced Coffee</h1>
+	//     <p class="description">The tears of the trees that lives on the summit of the Alps.</p>
+	//     <form action="/user/412897373847523/favorite?what=drink&id=518273743" method="POST">
+	//       <button type="submit">Add Iced Coffee to my favorites</button>
+	//     </form>
+	//   </div>
+	// </div>
 }
