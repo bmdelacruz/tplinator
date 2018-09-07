@@ -104,6 +104,53 @@ func TestCopyNode(t *testing.T) {
 	if dnst != dncst || dnet != dncet {
 		t.Error("original node and its copy does not match")
 	}
+
+	divNode = tplinator.CreateNode(html.ElementNode, "div", nil, false)
+	h1Node := tplinator.CreateNode(html.ElementNode, "h1", nil, false)
+	textNode := tplinator.CreateNode(html.TextNode, "Hello, world", nil, false)
+
+	divNode.AppendChild(h1Node)
+	h1Node.AppendChild(textNode)
+
+	divNodeCopy = tplinator.CopyNode(divNode)
+
+	if divNode.Data != divNodeCopy.Data || divNode.Type != divNodeCopy.Type ||
+		len(divNode.Attributes()) != len(divNodeCopy.Attributes()) {
+		t.Error("original node and its copy does not match")
+		return
+	}
+
+	var children []*tplinator.Node
+	divNodeCopy.Children(func(_ int, child *tplinator.Node) bool {
+		children = append(children, child)
+		return true
+	})
+	if len(children) != 1 {
+		t.Error("failed to copy children of divNode. len of " +
+			"children is not equal to 1")
+		return
+	}
+	h1NodeCopy := children[0]
+	if h1Node.Data != h1NodeCopy.Data || h1Node.Type != h1NodeCopy.Type ||
+		len(h1Node.Attributes()) != len(h1NodeCopy.Attributes()) {
+		t.Error("original node and its copy does not match")
+	}
+
+	children = nil
+	h1NodeCopy.Children(func(_ int, child *tplinator.Node) bool {
+		children = append(children, child)
+		return true
+	})
+	if len(children) != 1 {
+		t.Error("failed to copy children of h1NodeCopy. len of " +
+			"children is not equal to 1")
+		return
+	}
+	textNodeCopy := children[0]
+	if textNodeCopy.Data != textNodeCopy.Data ||
+		textNodeCopy.Type != textNodeCopy.Type {
+		t.Error("original node and its copy does not match")
+	}
 }
 
 func TestNode_ContextParams(t *testing.T) {

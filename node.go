@@ -3,6 +3,7 @@ package tplinator
 import (
 	"errors"
 
+	"github.com/alediaferia/stackgo"
 	"golang.org/x/net/html"
 )
 
@@ -45,18 +46,77 @@ func CreateNode(
 }
 
 func CopyNode(node *Node) *Node {
-	nodeCopy := &Node{
-		Data: node.Data,
-		Type: node.Type,
+	copyNode := func(n *Node) *Node {
+		nodeCopy := &Node{
+			Data:          n.Data,
+			Type:          n.Type,
+			isSelfClosing: n.isSelfClosing,
+		}
+		for _, attr := range n.attributes {
+			nodeCopy.attributes = append(nodeCopy.attributes, attr)
+		}
+		for _, ext := range n.extensions {
+			nodeCopy.extensions = append(nodeCopy.extensions, ext)
+		}
+		return nodeCopy
+	}
 
-		isSelfClosing: node.isSelfClosing,
+	type root struct {
+		nodeCopy *Node
+		origNode *Node
 	}
-	for _, attr := range node.attributes {
-		nodeCopy.attributes = append(nodeCopy.attributes, attr)
+	type nonRoot struct {
+		nodeCopy  *Node
+		origNode  *Node
+		newParent *Node
 	}
-	for _, ext := range node.extensions {
-		nodeCopy.extensions = append(nodeCopy.extensions, ext)
+
+	nodeCopy := copyNode(node)
+
+	copierStack := stackgo.NewStack()
+	copierStack.Push(root{
+		origNode: node,
+		nodeCopy: nodeCopy,
+	})
+
+	for copierStack.Top() != nil {
+		switch stackItem := copierStack.Pop().(type) {
+		case root:
+			origNode := stackItem.origNode
+			newParent := stackItem.nodeCopy
+
+			var children []*Node
+			origNode.Children(func(_ int, child *Node) bool {
+				children = append(children, child)
+				return true
+			})
+			for i := len(children) - 1; i >= 0; i-- {
+				copierStack.Push(nonRoot{
+					newParent: newParent,
+					origNode:  children[i],
+					nodeCopy:  copyNode(children[i]),
+				})
+			}
+		case nonRoot:
+			origNode := stackItem.origNode
+			newParent := stackItem.newParent
+			newParent.AppendChild(stackItem.nodeCopy)
+
+			var children []*Node
+			origNode.Children(func(_ int, child *Node) bool {
+				children = append(children, child)
+				return true
+			})
+			for i := len(children) - 1; i >= 0; i-- {
+				copierStack.Push(nonRoot{
+					newParent: stackItem.nodeCopy,
+					origNode:  children[i],
+					nodeCopy:  copyNode(children[i]),
+				})
+			}
+		}
 	}
+
 	return nodeCopy
 }
 
