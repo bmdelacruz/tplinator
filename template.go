@@ -60,9 +60,6 @@ func (tpl *Template) Render(params EvaluatorParams, writerFunc func(string)) err
 	tagStack := stackgo.NewStack()
 
 	pushNode := func(node *Node) {
-		if node == nil {
-			return
-		}
 		st, et := node.Tags()
 		if et != "" {
 			tagStack.Push(tplEndTag{tag: et})
