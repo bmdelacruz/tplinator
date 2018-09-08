@@ -24,7 +24,7 @@ type ConditionalExtension struct {
 
 func (ce *ConditionalExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
 	for _, condition := range ce.conditions {
-		evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
+		evaluator := dependencies.Get(EvaluatorExtDepKey).(Evaluator)
 		hasResult, result, err := TryEvaluateBoolOnContext(
 			node, evaluator, condition.conditionalExpression,
 		)
@@ -104,7 +104,7 @@ func (ce *ConditionalClassExtension) Apply(node *Node, dependencies ExtensionDep
 
 	appliedClasses = append(appliedClasses, ce.originalClasses...)
 	for _, conditionalClass := range ce.conditionalClasses {
-		evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
+		evaluator := dependencies.Get(EvaluatorExtDepKey).(Evaluator)
 		hasResult, result, err := TryEvaluateBoolOnContext(
 			node, evaluator, conditionalClass.conditionalExpression,
 		)
@@ -166,7 +166,7 @@ func (re *RangeExtension) Apply(node *Node, dependencies ExtensionDependencies, 
 		return node, nil, nil
 	}
 
-	evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
+	evaluator := dependencies.Get(EvaluatorExtDepKey).(Evaluator)
 	hasResult, result, err := TryEvaluateOnContext(node, evaluator, re.sourceVarName)
 	if !hasResult {
 		result, err = evaluator.Evaluate(re.sourceVarName, params)
@@ -233,7 +233,7 @@ type AttrStringInterpExtension struct {
 }
 
 func (asie AttrStringInterpExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
-	evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
+	evaluator := dependencies.Get(EvaluatorExtDepKey).(Evaluator)
 
 	for _, marker := range asie.markers {
 		hasAttr, _, attrVal := node.HasAttribute(marker.attributeKey)
@@ -261,7 +261,7 @@ type TextStringInterpExtension struct {
 }
 
 func (tsie TextStringInterpExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
-	evaluator := dependencies.Get(evaluatorExtDepKey).(Evaluator)
+	evaluator := dependencies.Get(EvaluatorExtDepKey).(Evaluator)
 
 	for _, marker := range tsie.markers {
 		hasResult, result, err := TryEvaluateStringOnContext(node, evaluator, marker.key)
