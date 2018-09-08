@@ -13,9 +13,11 @@ type Node struct {
 
 	isSelfClosing bool
 
-	attributes    []Attribute
-	extensions    []Extension
+	attributes []Attribute
+	extensions []Extension
+
 	contextParams EvaluatorParams
+	parentECS     EvaluatorContextSource
 
 	parent      *Node
 	firstChild  *Node
@@ -127,6 +129,41 @@ func (n Node) ContextParams() EvaluatorParams {
 
 func (n *Node) SetContextParams(contextParams EvaluatorParams) {
 	n.contextParams = contextParams
+}
+
+func (n *Node) GetContextParams() []EvaluatorParams {
+	var evaluatorParams []EvaluatorParams
+
+	if n.parentECS != nil {
+		if n.contextParams != nil {
+			evaluatorParams = append(evaluatorParams, n.contextParams)
+		}
+		if parentCP := n.parentECS.GetContextParams(); len(parentCP) > 0 {
+			evaluatorParams = append(evaluatorParams, parentCP...)
+		}
+		return evaluatorParams
+	}
+
+	epStack := stackgo.NewStack()
+	epStack.Push(n)
+
+	for epStack.Top() != nil {
+		currentNode := epStack.Pop().(*Node)
+		if currentNode.contextParams != nil {
+			evaluatorParams = append(
+				evaluatorParams, currentNode.contextParams,
+			)
+		}
+		if parentNode := currentNode.Parent(); parentNode != nil {
+			epStack.Push(parentNode)
+		}
+	}
+
+	return evaluatorParams
+}
+
+func (n *Node) SetParentEvaluatorContextSource(ecs EvaluatorContextSource) {
+	n.parentECS = ecs
 }
 
 func (n Node) Parent() *Node {

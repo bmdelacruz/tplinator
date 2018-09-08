@@ -25,7 +25,7 @@ type ConditionalExtension struct {
 func (ce *ConditionalExtension) Apply(node *Node, dependencies ExtensionDependencies, params EvaluatorParams) (*Node, []*Node, error) {
 	for _, condition := range ce.conditions {
 		evaluator := dependencies.Get(EvaluatorExtDepKey).(Evaluator)
-		hasResult, result, err := TryEvaluateBoolOnContext(
+		hasResult, result, err := TryEvaluateBoolUsingContext(
 			node, evaluator, condition.conditionalExpression,
 		)
 		if !hasResult {
@@ -105,7 +105,7 @@ func (ce *ConditionalClassExtension) Apply(node *Node, dependencies ExtensionDep
 	appliedClasses = append(appliedClasses, ce.originalClasses...)
 	for _, conditionalClass := range ce.conditionalClasses {
 		evaluator := dependencies.Get(EvaluatorExtDepKey).(Evaluator)
-		hasResult, result, err := TryEvaluateBoolOnContext(
+		hasResult, result, err := TryEvaluateBoolUsingContext(
 			node, evaluator, conditionalClass.conditionalExpression,
 		)
 		if !hasResult {
@@ -167,7 +167,7 @@ func (re *RangeExtension) Apply(node *Node, dependencies ExtensionDependencies, 
 	}
 
 	evaluator := dependencies.Get(EvaluatorExtDepKey).(Evaluator)
-	hasResult, result, err := TryEvaluateOnContext(node, evaluator, re.sourceVarName)
+	hasResult, result, err := TryEvaluateUsingContext(node, evaluator, re.sourceVarName)
 	if !hasResult {
 		result, err = evaluator.Evaluate(re.sourceVarName, params)
 	}
@@ -185,6 +185,7 @@ func (re *RangeExtension) Apply(node *Node, dependencies ExtensionDependencies, 
 	for _, rangeEvalParam := range rangeEvalParams {
 		nodeCopy := CopyNode(node)
 		nodeCopy.SetContextParams(rangeEvalParam)
+		nodeCopy.SetParentEvaluatorContextSource(node.Parent())
 
 		// ignore new siblings produced by this Node#ApplyExtensions func call
 		newNodeCopy, _, err := nodeCopy.ApplyExtensions(dependencies, params)
@@ -241,7 +242,7 @@ func (asie AttrStringInterpExtension) Apply(node *Node, dependencies ExtensionDe
 			return nil, nil, fmt.Errorf("attr string interp ext: assertion error. cannot find attr `%v`", marker.attributeKey)
 		}
 		for _, marker := range marker.markers {
-			hasResult, result, err := TryEvaluateStringOnContext(node, evaluator, marker.key)
+			hasResult, result, err := TryEvaluateStringUsingContext(node, evaluator, marker.key)
 			if !hasResult {
 				result, err = evaluator.EvaluateString(marker.key, params)
 			}
@@ -264,7 +265,7 @@ func (tsie TextStringInterpExtension) Apply(node *Node, dependencies ExtensionDe
 	evaluator := dependencies.Get(EvaluatorExtDepKey).(Evaluator)
 
 	for _, marker := range tsie.markers {
-		hasResult, result, err := TryEvaluateStringOnContext(node, evaluator, marker.key)
+		hasResult, result, err := TryEvaluateStringUsingContext(node, evaluator, marker.key)
 		if !hasResult {
 			result, err = evaluator.EvaluateString(marker.key, params)
 		}
