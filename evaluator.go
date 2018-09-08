@@ -8,55 +8,51 @@ import (
 
 type EvaluatorParams map[string]interface{}
 
+type EvaluatorContextSource interface {
+	GetContextParams() []EvaluatorParams
+	SetParentEvaluatorContextSource(ecs EvaluatorContextSource)
+}
+
 type Evaluator interface {
 	EvaluateBool(input string, params EvaluatorParams) (bool, error)
 	EvaluateString(input string, params EvaluatorParams) (string, error)
 	Evaluate(input string, params EvaluatorParams) (interface{}, error)
 }
 
-func TryEvaluateBoolOnContext(ctxNode *Node, evaluator Evaluator, inputStr string) (bool, bool, error) {
+func TryEvaluateBoolUsingContext(ecs EvaluatorContextSource, evaluator Evaluator, inputStr string) (bool, bool, error) {
 	var result bool
 	var err error
-
-	hasResult := false
-	for !hasResult && ctxNode != nil {
-		if ctxParams := ctxNode.ContextParams(); ctxParams != nil {
-			result, err = evaluator.EvaluateBool(inputStr, ctxParams)
-			hasResult = err == nil
+	for _, contextParams := range ecs.GetContextParams() {
+		result, err = evaluator.EvaluateBool(inputStr, contextParams)
+		if err == nil {
+			return true, result, nil
 		}
-		ctxNode = ctxNode.Parent()
 	}
-	return hasResult, result, err
+	return false, false, err
 }
 
-func TryEvaluateStringOnContext(ctxNode *Node, evaluator Evaluator, inputStr string) (bool, string, error) {
+func TryEvaluateStringUsingContext(ecs EvaluatorContextSource, evaluator Evaluator, inputStr string) (bool, string, error) {
 	var result string
 	var err error
-
-	hasResult := false
-	for !hasResult && ctxNode != nil {
-		if ctxParams := ctxNode.ContextParams(); ctxParams != nil {
-			result, err = evaluator.EvaluateString(inputStr, ctxParams)
-			hasResult = err == nil
+	for _, contextParams := range ecs.GetContextParams() {
+		result, err = evaluator.EvaluateString(inputStr, contextParams)
+		if err == nil {
+			return true, result, nil
 		}
-		ctxNode = ctxNode.Parent()
 	}
-	return hasResult, result, err
+	return false, "", err
 }
 
-func TryEvaluateOnContext(ctxNode *Node, evaluator Evaluator, inputStr string) (bool, interface{}, error) {
+func TryEvaluateUsingContext(ecs EvaluatorContextSource, evaluator Evaluator, inputStr string) (bool, interface{}, error) {
 	var result interface{}
 	var err error
-
-	hasResult := false
-	for !hasResult && ctxNode != nil {
-		if ctxParams := ctxNode.ContextParams(); ctxParams != nil {
-			result, err = evaluator.Evaluate(inputStr, ctxParams)
-			hasResult = err == nil
+	for _, contextParams := range ecs.GetContextParams() {
+		result, err = evaluator.Evaluate(inputStr, contextParams)
+		if err == nil {
+			return true, result, nil
 		}
-		ctxNode = ctxNode.Parent()
 	}
-	return hasResult, result, err
+	return false, nil, err
 }
 
 type govaluator struct {

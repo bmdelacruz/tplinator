@@ -162,11 +162,6 @@ func ExampleConditionalClasses() {
 }
 
 func ExampleListRendering() {
-	// FIXME
-	// since range elements are not attached to the dom tree,
-	// that element and its children will not be able to access
-	// context params of the elements outside their scope.
-
 	sampleHtml := `
 	<div class="menu">
 		<div class="menu-entry" go-range="menuEntries" go-if-class-food="isFood" go-if-class-drink="isDrink">
@@ -227,6 +222,80 @@ func ExampleListRendering() {
 	//     <form action="/user/412897373847523/favorite?what=drink&id=518273743" method="POST">
 	//       <button type="submit">Add Iced Coffee to my favorites</button>
 	//     </form>
+	//   </div>
+	// </div>
+}
+
+func ExampleNestedListRendering() {
+	sampleHtml := `
+	<div class="pets">
+		<div class="pet" go-range="pets">
+			<div class="images">
+				<img src="/images/{{go:id}}/{{go:imgid}}" go-range="imgids"/>
+			</div>
+			<h1>{{go:name}}</h1>
+			<p>{{go:description}}</p>
+		</div>
+	</div>
+	`
+
+	template, err := tplinator.Tplinate(strings.NewReader(sampleHtml))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bytes, err := template.RenderBytes(tplinator.EvaluatorParams{
+		"pets": tplinator.RangeParams(
+			tplinator.EvaluatorParams{
+				"id":          "234849528332",
+				"name":        "Larry",
+				"description": "A wonderful dog",
+
+				"imgids": tplinator.RangeParams(
+					tplinator.EvaluatorParams{"imgid": "4a8E2ndfs"},
+					tplinator.EvaluatorParams{"imgid": "9ejxWqQdg"},
+					tplinator.EvaluatorParams{"imgid": "Ld7djNdcF"},
+				),
+			},
+			tplinator.EvaluatorParams{
+				"id":          "234849528333",
+				"name":        "Perry",
+				"description": "My best friend",
+
+				"imgids": tplinator.RangeParams(
+					tplinator.EvaluatorParams{"imgid": "7fjE2ndfs"},
+					tplinator.EvaluatorParams{"imgid": "52mxWqQdg"},
+					tplinator.EvaluatorParams{"imgid": "dk2djNdcF"},
+				),
+			},
+		),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gohtml.Condense = true
+	fmt.Printf("%s\n", gohtml.FormatBytes(bytes))
+
+	// Output:
+	// <div class="pets">
+	//   <div class="pet">
+	//     <div class="images">
+	//       <img src="/images/234849528332/4a8E2ndfs"/>
+	//       <img src="/images/234849528332/9ejxWqQdg"/>
+	//       <img src="/images/234849528332/Ld7djNdcF"/>
+	//     </div>
+	//     <h1>Larry</h1>
+	//     <p>A wonderful dog</p>
+	//   </div>
+	//   <div class="pet">
+	//     <div class="images">
+	//       <img src="/images/234849528333/7fjE2ndfs"/>
+	//       <img src="/images/234849528333/52mxWqQdg"/>
+	//       <img src="/images/234849528333/dk2djNdcF"/>
+	//     </div>
+	//     <h1>Perry</h1>
+	//     <p>My best friend</p>
 	//   </div>
 	// </div>
 }

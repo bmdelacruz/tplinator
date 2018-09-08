@@ -31,6 +31,22 @@ func TestNodeExtension_Conditional(t *testing.T) {
 	} else if finalH1Node != nil {
 		t.Errorf("shouldRender is false but finalH1Node is not nil")
 	}
+	delete(params, "shouldRender")
+	finalH1Node, _, err = h1Node.ApplyExtensions(extdep, params)
+	if err == nil {
+		t.Errorf("expecting an error")
+	}
+
+	h1Node = tplinator.CreateNode(html.ElementNode, "h1", []html.Attribute{
+		html.Attribute{Key: "go-if", Val: "shouldRende]r"},
+	}, false)
+	tplinator.ConditionalExtensionNodeProcessor(h1Node)
+
+	params["shouldRender"] = false
+	finalH1Node, _, err = h1Node.ApplyExtensions(extdep, params)
+	if err == nil {
+		t.Errorf("expecting an error")
+	}
 
 	// test branching conditional elements
 	divNode := tplinator.CreateNode(html.ElementNode, "div", nil, false)
@@ -138,6 +154,23 @@ func TestNodeExtension_ConditionalClass(t *testing.T) {
 		}
 	}
 
+	delete(params, "isAnAnimal")
+	finalDivNode, _, err = divNode.ApplyExtensions(extdep, params)
+	if err == nil {
+		t.Errorf("expecting an error")
+	}
+
+	divNode = tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
+		html.Attribute{Key: "go-if-class-animal", Val: "isAnAnima]l"},
+	}, false)
+	tplinator.ConditionalClassExtensionNodeProcessor(divNode)
+
+	params["isAnAnimal"] = false
+	finalDivNode, _, err = divNode.ApplyExtensions(extdep, params)
+	if err == nil {
+		t.Errorf("expecting an error")
+	}
+
 	divNode = tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
 		html.Attribute{Key: "class", Val: "photo-entry"},
 		html.Attribute{Key: "go-if-class-animal", Val: "isAnAnimal"},
@@ -201,6 +234,61 @@ func TestNodeExtension_Range(t *testing.T) {
 	} else if len(nodes) != 2 {
 		t.Errorf("expected 2 new nodes")
 		return
+	}
+
+	divNode = tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
+		html.Attribute{Key: "go-range", Val: "pets"},
+	}, false)
+	tplinator.RangeExtensionNodeProcessor(divNode)
+
+	params["pets"] = tplinator.EvaluatorParams{
+		"name": "catdog",
+		"age":  "1",
+	}
+	_, _, err = divNode.ApplyExtensions(extdep, params)
+	if err == nil {
+		t.Error("expecting an error")
+	}
+
+	divNode = tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
+		html.Attribute{Key: "go-range", Val: "pet]s"},
+	}, false)
+	tplinator.RangeExtensionNodeProcessor(divNode)
+
+	params["pets"] = tplinator.RangeParams(
+		tplinator.EvaluatorParams{
+			"name": "catdog",
+			"age":  "1",
+		},
+		tplinator.EvaluatorParams{
+			"name": "felycat",
+			"age":  "2",
+		},
+	)
+	_, _, err = divNode.ApplyExtensions(extdep, params)
+	if err == nil {
+		t.Error("expecting an error")
+	}
+
+	divNode = tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
+		html.Attribute{Key: "go-range", Val: "pets"},
+		html.Attribute{Key: "value", Val: "{{go:name}}"},
+	}, false)
+
+	tplinator.RangeExtensionNodeProcessor(divNode)
+	tplinator.StringInterpolationNodeProcessor(divNode)
+
+	params["pets"] = tplinator.RangeParams(
+		tplinator.EvaluatorParams{
+			"age": "1",
+		},
+		tplinator.EvaluatorParams{
+			"age": "2",
+		},
+	)
+	_, _, err = divNode.ApplyExtensions(extdep, params)
+	if err == nil {
+		t.Error("expecting an error")
 	}
 }
 

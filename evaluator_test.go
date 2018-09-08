@@ -27,7 +27,7 @@ func TestTryEvaluateOnContext(t *testing.T) {
 	evaluator := deps.Get(tplinator.EvaluatorExtDepKey).(tplinator.Evaluator)
 
 	t.Run(`bool`, func(t *testing.T) {
-		hasIsSong, isSong, err := tplinator.TryEvaluateBoolOnContext(divNode, evaluator, `isSong`)
+		hasIsSong, isSong, err := tplinator.TryEvaluateBoolUsingContext(divNode, evaluator, `isSong`)
 		if err != nil {
 			t.Error("unexpected error:", err)
 		} else if !hasIsSong || !isSong {
@@ -35,25 +35,25 @@ func TestTryEvaluateOnContext(t *testing.T) {
 		}
 	})
 	t.Run(`not bool`, func(t *testing.T) {
-		_, _, err := tplinator.TryEvaluateBoolOnContext(divNode, evaluator, `songName`)
+		_, _, err := tplinator.TryEvaluateBoolUsingContext(divNode, evaluator, `songName`)
 		if err == nil {
 			t.Error("expecting an error because `songName` is not a boolean type")
 		}
 	})
 	t.Run(`bool (invalid input string)`, func(t *testing.T) {
-		_, _, err := tplinator.TryEvaluateBoolOnContext(divNode, evaluator, `isS--ong`)
+		_, _, err := tplinator.TryEvaluateBoolUsingContext(divNode, evaluator, `isS--ong`)
 		if err == nil {
 			t.Error("expecting an error because input string is not a valid expression")
 		}
 	})
 	t.Run(`bool (missing param)`, func(t *testing.T) {
-		_, _, err := tplinator.TryEvaluateBoolOnContext(divNode, evaluator, `isSpecialSong`)
+		_, _, err := tplinator.TryEvaluateBoolUsingContext(divNode, evaluator, `isSpecialSong`)
 		if err == nil {
 			t.Error("expecting an error because the param is not present on the evaluator params")
 		}
 	})
 	t.Run(`string`, func(t *testing.T) {
-		hasSongName, songName, err := tplinator.TryEvaluateStringOnContext(divNode, evaluator, `songName`)
+		hasSongName, songName, err := tplinator.TryEvaluateStringUsingContext(divNode, evaluator, `songName`)
 		if err != nil {
 			t.Error("unexpected error:", err)
 		} else if !hasSongName || songName != `Someday` {
@@ -61,25 +61,25 @@ func TestTryEvaluateOnContext(t *testing.T) {
 		}
 	})
 	t.Run(`not string`, func(t *testing.T) {
-		_, _, err := tplinator.TryEvaluateStringOnContext(divNode, evaluator, `isSong`)
+		_, _, err := tplinator.TryEvaluateStringUsingContext(divNode, evaluator, `isSong`)
 		if err == nil {
 			t.Error("expecting an error because `isSong` is not a string type")
 		}
 	})
 	t.Run(`string (invalid input string)`, func(t *testing.T) {
-		_, _, err := tplinator.TryEvaluateStringOnContext(divNode, evaluator, `songNa-- me`)
+		_, _, err := tplinator.TryEvaluateStringUsingContext(divNode, evaluator, `songNa-- me`)
 		if err == nil {
 			t.Error("expecting an error because input string is not a valid expression")
 		}
 	})
 	t.Run(`string (missing param)`, func(t *testing.T) {
-		_, _, err := tplinator.TryEvaluateStringOnContext(divNode, evaluator, `songLongName`)
+		_, _, err := tplinator.TryEvaluateStringUsingContext(divNode, evaluator, `songLongName`)
 		if err == nil {
 			t.Error("expecting an error because the param is not present on the evaluator params")
 		}
 	})
 	t.Run(`custom struct`, func(t *testing.T) {
-		hasSongDetails, songDetails, err := tplinator.TryEvaluateOnContext(divNode, evaluator, `songDetails`)
+		hasSongDetails, songDetails, err := tplinator.TryEvaluateUsingContext(divNode, evaluator, `songDetails`)
 		if err != nil {
 			t.Error("unexpected error:", err)
 			return
@@ -95,13 +95,13 @@ func TestTryEvaluateOnContext(t *testing.T) {
 		}
 	})
 	t.Run(`custom struct (invalid input string)`, func(t *testing.T) {
-		_, _, err := tplinator.TryEvaluateOnContext(divNode, evaluator, `songDe-t ails`)
+		_, _, err := tplinator.TryEvaluateUsingContext(divNode, evaluator, `songDe-t ails`)
 		if err == nil {
 			t.Error("expecting an error because input string is not a valid expression")
 		}
 	})
 	t.Run(`custom struct (missing param)`, func(t *testing.T) {
-		_, _, err := tplinator.TryEvaluateOnContext(divNode, evaluator, `songDeets`)
+		_, _, err := tplinator.TryEvaluateUsingContext(divNode, evaluator, `songDeets`)
 		if err == nil {
 			t.Error("expecting an error because the param is not present on the evaluator params")
 		}
