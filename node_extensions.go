@@ -185,7 +185,10 @@ func (re *RangeExtension) Apply(node *Node, dependencies ExtensionDependencies, 
 	for _, rangeEvalParam := range rangeEvalParams {
 		nodeCopy := CopyNode(node)
 		nodeCopy.SetContextParams(rangeEvalParam)
-		nodeCopy.SetParentEvaluatorContextSource(node.Parent())
+
+		if parent := node.Parent(); parent != nil {
+			nodeCopy.SetParentEvaluatorContextSource(parent)
+		}
 
 		// ignore new siblings produced by this Node#ApplyExtensions func call
 		newNodeCopy, _, err := nodeCopy.ApplyExtensions(dependencies, params)
