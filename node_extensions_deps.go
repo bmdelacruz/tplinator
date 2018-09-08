@@ -1,11 +1,13 @@
 package tplinator
 
+type DependencyKey string
+
 const (
-	evaluatorExtDepKey = "evaluator"
+	EvaluatorExtDepKey DependencyKey = "evaluator"
 )
 
 type ExtensionDependencies interface {
-	Get(dependencyKey string) interface{}
+	Get(dependencyKey DependencyKey) interface{}
 }
 
 type compoundExtensionDependencies struct {
@@ -13,7 +15,7 @@ type compoundExtensionDependencies struct {
 	defaultExtDep ExtensionDependencies
 }
 
-func (ed *compoundExtensionDependencies) Get(dependencyKey string) interface{} {
+func (ed *compoundExtensionDependencies) Get(dependencyKey DependencyKey) interface{} {
 	for _, extDep := range ed.extDeps {
 		if dep := extDep.Get(dependencyKey); dep != nil {
 			return dep
@@ -32,9 +34,9 @@ func NewDefaultExtensionDependencies() ExtensionDependencies {
 	}
 }
 
-func (ed *DefaultExtensionDependencies) Get(dependencyKey string) interface{} {
+func (ed *DefaultExtensionDependencies) Get(dependencyKey DependencyKey) interface{} {
 	switch dependencyKey {
-	case evaluatorExtDepKey:
+	case EvaluatorExtDepKey:
 		return ed.evaluator
 	default:
 		return nil
