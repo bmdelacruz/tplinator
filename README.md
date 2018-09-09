@@ -4,8 +4,8 @@ An HTML template renderer heavily inspired by the syntax used for Angular and Vu
 
 [![Stage](https://img.shields.io/badge/experimental-red.svg)](https://img.shields.io/badge/experimental-red.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/bmdelacruz/tplinator)](https://goreportcard.com/report/github.com/bmdelacruz/tplinator)
-[![Coverage Status](https://coveralls.io/repos/github/bmdelacruz/tplinator/badge.svg?branch=rewrite-transformer)](https://coveralls.io/github/bmdelacruz/tplinator?branch=rewrite-transformer)
-[![CircleCI](https://circleci.com/gh/bmdelacruz/tplinator/tree/rewrite-transformer.svg?style=svg)](https://circleci.com/gh/bmdelacruz/tplinator/tree/rewrite-transformer)
+[![Coverage Status](https://coveralls.io/repos/github/bmdelacruz/tplinator/badge.svg?branch=master)](https://coveralls.io/github/bmdelacruz/tplinator?branch=master)
+[![CircleCI](https://circleci.com/gh/bmdelacruz/tplinator/tree/master.svg?style=svg)](https://circleci.com/gh/bmdelacruz/tplinator/tree/master)
 
 
 ## Features
