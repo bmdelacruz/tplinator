@@ -88,8 +88,8 @@ func TestCreateNode(t *testing.T) {
 
 func TestCopyNode(t *testing.T) {
 	divNode := tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
-		html.Attribute{Key: "class", Val: "animals"},
-		html.Attribute{Key: "go-if", Val: "hasAnimals"},
+		{Key: "class", Val: "animals"},
+		{Key: "go-if", Val: "hasAnimals"},
 	}, false)
 	divNodeCopy := tplinator.CopyNode(divNode)
 
@@ -356,15 +356,15 @@ func TestNode_NextSiblingsBreak(t *testing.T) {
 
 func TestNode_Attributes(t *testing.T) {
 	node := tplinator.CreateNode(html.ElementNode, "img", []html.Attribute{
-		html.Attribute{Key: "src", Val: "/static/images/cat.png"},
-		html.Attribute{Key: "class", Val: "pictures animal"},
-		html.Attribute{Key: "hidden", Val: ""},
+		{Key: "src", Val: "/static/images/cat.png"},
+		{Key: "class", Val: "pictures animal"},
+		{Key: "hidden", Val: ""},
 	}, true)
 
 	attributes := []tplinator.Attribute{
-		tplinator.Attribute{Key: "src", Value: "/static/images/cat.png"},
-		tplinator.Attribute{Key: "class", Value: "pictures animal"},
-		tplinator.Attribute{Key: "hidden", Value: "", KeyOnly: true},
+		{Key: "src", Value: "/static/images/cat.png"},
+		{Key: "class", Value: "pictures animal"},
+		{Key: "hidden", Value: "", KeyOnly: true},
 	}
 	actualAttributes := node.Attributes()
 
@@ -413,7 +413,7 @@ func TestNode_HasAttribute(t *testing.T) {
 	}
 
 	node := tplinator.CreateNode(html.ElementNode, "img", []html.Attribute{
-		html.Attribute{Key: "src", Val: "/static/images/cat.png"},
+		{Key: "src", Val: "/static/images/cat.png"},
 	}, true)
 
 	for _, tc := range testCases {
@@ -446,10 +446,10 @@ func TestNode_HasAttributes(t *testing.T) {
 
 			nodeMaker: func() *tplinator.Node {
 				return tplinator.CreateNode(html.ElementNode, "img", []html.Attribute{
-					html.Attribute{Key: "id", Val: "#animal002"},
-					html.Attribute{Key: "src", Val: "/static/images/cat.png"},
-					html.Attribute{Key: "go-if", Val: "hasImage"},
-					html.Attribute{Key: "go-if-class-cat", Val: "isCat"},
+					{Key: "id", Val: "#animal002"},
+					{Key: "src", Val: "/static/images/cat.png"},
+					{Key: "go-if", Val: "hasImage"},
+					{Key: "go-if-class-cat", Val: "isCat"},
 				}, true)
 			},
 			testFunc: func(attr tplinator.Attribute) bool {
@@ -528,7 +528,7 @@ func TestNode_AddAttribute(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			node := tplinator.CreateNode(html.ElementNode, "img", []html.Attribute{
-				html.Attribute{Key: "src", Val: "/static/images/cat.png"},
+				{Key: "src", Val: "/static/images/cat.png"},
 			}, true)
 
 			tc.modifyNodeFunc(node)
@@ -603,8 +603,8 @@ func TestNode_RemoveAttribute(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			node := tplinator.CreateNode(html.ElementNode, "img", []html.Attribute{
-				html.Attribute{Key: "src", Val: "/static/images/cat.png"},
-				html.Attribute{Key: "class", Val: "pictures animal"},
+				{Key: "src", Val: "/static/images/cat.png"},
+				{Key: "class", Val: "pictures animal"},
 			}, true)
 
 			tc.modifyNodeFunc(node)

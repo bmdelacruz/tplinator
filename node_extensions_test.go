@@ -13,7 +13,7 @@ func TestNodeExtension_Conditional(t *testing.T) {
 
 	// test if-only conditional element
 	h1Node := tplinator.CreateNode(html.ElementNode, "h1", []html.Attribute{
-		html.Attribute{Key: "go-if", Val: "shouldRender"},
+		{Key: "go-if", Val: "shouldRender"},
 	}, false)
 	tplinator.ConditionalExtensionNodeProcessor(h1Node)
 
@@ -32,18 +32,18 @@ func TestNodeExtension_Conditional(t *testing.T) {
 		t.Errorf("shouldRender is false but finalH1Node is not nil")
 	}
 	delete(params, "shouldRender")
-	finalH1Node, _, err = h1Node.ApplyExtensions(extdep, params)
+	_, _, err = h1Node.ApplyExtensions(extdep, params)
 	if err == nil {
 		t.Errorf("expecting an error")
 	}
 
 	h1Node = tplinator.CreateNode(html.ElementNode, "h1", []html.Attribute{
-		html.Attribute{Key: "go-if", Val: "shouldRende]r"},
+		{Key: "go-if", Val: "shouldRende]r"},
 	}, false)
 	tplinator.ConditionalExtensionNodeProcessor(h1Node)
 
 	params["shouldRender"] = false
-	finalH1Node, _, err = h1Node.ApplyExtensions(extdep, params)
+	_, _, err = h1Node.ApplyExtensions(extdep, params)
 	if err == nil {
 		t.Errorf("expecting an error")
 	}
@@ -51,16 +51,16 @@ func TestNodeExtension_Conditional(t *testing.T) {
 	// test branching conditional elements
 	divNode := tplinator.CreateNode(html.ElementNode, "div", nil, false)
 	h1Node = tplinator.CreateNode(html.ElementNode, "h1", []html.Attribute{
-		html.Attribute{Key: "go-if", Val: "hasOne"},
+		{Key: "go-if", Val: "hasOne"},
 	}, false)
 	h2Node := tplinator.CreateNode(html.ElementNode, "h2", []html.Attribute{
-		html.Attribute{Key: "go-elif", Val: "hasTwo"},
+		{Key: "go-elif", Val: "hasTwo"},
 	}, false)
 	h3Node := tplinator.CreateNode(html.ElementNode, "h3", []html.Attribute{
-		html.Attribute{Key: "go-else-if", Val: "hasThree"},
+		{Key: "go-else-if", Val: "hasThree"},
 	}, false)
 	h4Node := tplinator.CreateNode(html.ElementNode, "h4", []html.Attribute{
-		html.Attribute{Key: "go-else", Val: ""},
+		{Key: "go-else", Val: ""},
 	}, false)
 
 	divNode.AppendChild(h1Node)
@@ -100,7 +100,7 @@ func TestNodeExtension_Conditional(t *testing.T) {
 	// test absent else-if and else branch conditional elements
 	divNode = tplinator.CreateNode(html.ElementNode, "div", nil, false)
 	h1Node = tplinator.CreateNode(html.ElementNode, "h1", []html.Attribute{
-		html.Attribute{Key: "go-if", Val: "hasOne"},
+		{Key: "go-if", Val: "hasOne"},
 	}, false)
 	h2Node = tplinator.CreateNode(html.ElementNode, "h2", nil, false)
 
@@ -122,7 +122,7 @@ func TestNodeExtension_ConditionalClass(t *testing.T) {
 	params := make(map[string]interface{})
 
 	divNode := tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
-		html.Attribute{Key: "go-if-class-animal", Val: "isAnAnimal"},
+		{Key: "go-if-class-animal", Val: "isAnAnimal"},
 	}, false)
 	tplinator.ConditionalClassExtensionNodeProcessor(divNode)
 
@@ -161,7 +161,7 @@ func TestNodeExtension_ConditionalClass(t *testing.T) {
 	}
 
 	divNode = tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
-		html.Attribute{Key: "go-if-class-animal", Val: "isAnAnima]l"},
+		{Key: "go-if-class-animal", Val: "isAnAnima]l"},
 	}, false)
 	tplinator.ConditionalClassExtensionNodeProcessor(divNode)
 
@@ -172,8 +172,8 @@ func TestNodeExtension_ConditionalClass(t *testing.T) {
 	}
 
 	divNode = tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
-		html.Attribute{Key: "class", Val: "photo-entry"},
-		html.Attribute{Key: "go-if-class-animal", Val: "isAnAnimal"},
+		{Key: "class", Val: "photo-entry"},
+		{Key: "go-if-class-animal", Val: "isAnAnimal"},
 	}, false)
 	tplinator.ConditionalClassExtensionNodeProcessor(divNode)
 
@@ -213,7 +213,7 @@ func TestNodeExtension_Range(t *testing.T) {
 	params := make(map[string]interface{})
 
 	divNode := tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
-		html.Attribute{Key: "go-range", Val: "pets"},
+		{Key: "go-range", Val: "pets"},
 	}, false)
 	tplinator.RangeExtensionNodeProcessor(divNode)
 
@@ -237,7 +237,7 @@ func TestNodeExtension_Range(t *testing.T) {
 	}
 
 	divNode = tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
-		html.Attribute{Key: "go-range", Val: "pets"},
+		{Key: "go-range", Val: "pets"},
 	}, false)
 	tplinator.RangeExtensionNodeProcessor(divNode)
 
@@ -251,7 +251,7 @@ func TestNodeExtension_Range(t *testing.T) {
 	}
 
 	divNode = tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
-		html.Attribute{Key: "go-range", Val: "pet]s"},
+		{Key: "go-range", Val: "pet]s"},
 	}, false)
 	tplinator.RangeExtensionNodeProcessor(divNode)
 
@@ -271,8 +271,8 @@ func TestNodeExtension_Range(t *testing.T) {
 	}
 
 	divNode = tplinator.CreateNode(html.ElementNode, "div", []html.Attribute{
-		html.Attribute{Key: "go-range", Val: "pets"},
-		html.Attribute{Key: "value", Val: "{{go:name}}"},
+		{Key: "go-range", Val: "pets"},
+		{Key: "value", Val: "{{go:name}}"},
 	}, false)
 
 	tplinator.RangeExtensionNodeProcessor(divNode)
@@ -330,7 +330,7 @@ func TestNodeExtension_StringInterpolation(t *testing.T) {
 	}
 
 	aNode := tplinator.CreateNode(html.ElementNode, "h1", []html.Attribute{
-		html.Attribute{Key: "href", Val: "/users/{{go:uid}}"},
+		{Key: "href", Val: "/users/{{go:uid}}"},
 	}, false)
 	tplinator.StringInterpolationNodeProcessor(aNode)
 
@@ -349,7 +349,7 @@ func TestNodeExtension_StringInterpolation(t *testing.T) {
 	}
 
 	aNode = tplinator.CreateNode(html.ElementNode, "h1", []html.Attribute{
-		html.Attribute{Key: "href", Val: "/users/{{go:uid}}"},
+		{Key: "href", Val: "/users/{{go:uid}}"},
 	}, false)
 	aNode.SetContextParams(tplinator.EvaluatorParams{
 		"uid": "41728897352322",
